@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
 import 'supabase_service.dart';
@@ -56,28 +57,19 @@ class DatabaseService {
     );
   }
 
-  // Upload product image to Supabase Storage
+  // Upload product image, save locally if offline
   Future<String?> uploadProductImage(File imageFile) async {
     try {
       if (await _isOnline()) {
-        // Generate unique filename
         final fileName = '${DateTime.now().millisecondsSinceEpoch}_${basename(imageFile.path)}';
-        
-        // Upload to Supabase Storage
-        final response = await _supabase.storage
-            .from('product-images')
-            .upload(fileName, imageFile);
-        
-        // Get public URL
-        final publicUrl = _supabase.storage
-            .from('product-images')
-            .getPublicUrl(fileName);
-        
-        return publicUrl;
+        await _supabase.storage.from('product-images').upload(fileName, imageFile);
+        return _supabase.storage.from('product-images').getPublicUrl(fileName);
       } else {
-        // When offline, store locally and return local path
-        // You might want to implement local storage logic here
-        return imageFile.path;
+        final localDir = await getApplicationDocumentsDirectory();
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${basename(imageFile.path)}';
+        final localPath = '${localDir.path}/$fileName';
+        await imageFile.copy(localPath);
+        return localPath; // Return local path for offline use
       }
     } catch (e) {
       print('Error uploading image: $e');
@@ -85,55 +77,44 @@ class DatabaseService {
     }
   }
 
-  // Delete image from Supabase Storage
+  // Delete image from Supabase or local storage
   Future<void> deleteProductImage(String imageUrl) async {
     try {
       if (await _isOnline() && imageUrl.contains('supabase')) {
-        // Extract filename from URL
         final uri = Uri.parse(imageUrl);
         final fileName = uri.pathSegments.last;
-        
-        await _supabase.storage
-            .from('product-images')
-            .remove([fileName]);
+        await _supabase.storage.from('product-images').remove([fileName]);
+      } else if (imageUrl.startsWith((await getApplicationDocumentsDirectory()).path)) {
+        final file = File(imageUrl);
+        if (await file.exists()) await file.delete();
       }
     } catch (e) {
       print('Error deleting image: $e');
     }
   }
 
-  // Enhanced method to handle image updates
+  // Handle image updates with offline support
   Future<String?> updateProductImage({
     String? oldImageUrl,
     File? newImageFile,
     bool removeImage = false,
   }) async {
     try {
-      // If removing image, delete old one and return null
-      if (removeImage) {
-        if (oldImageUrl != null) {
-          await deleteProductImage(oldImageUrl);
-        }
+      if (removeImage && oldImageUrl != null) {
+        await deleteProductImage(oldImageUrl);
         return null;
       }
 
-      // If no new image provided, keep the old one
-      if (newImageFile == null) {
-        return oldImageUrl;
-      }
+      if (newImageFile == null) return oldImageUrl;
 
-      // Upload new image
       final newImageUrl = await uploadProductImage(newImageFile);
-      
-      // If upload successful and there's an old image, delete it
       if (newImageUrl != null && oldImageUrl != null && oldImageUrl != newImageUrl) {
         await deleteProductImage(oldImageUrl);
       }
-
       return newImageUrl;
     } catch (e) {
       print('Error updating product image: $e');
-      return oldImageUrl; // Return old URL if update fails
+      return oldImageUrl;
     }
   }
 
@@ -141,10 +122,17 @@ class DatabaseService {
     if (await _isOnline()) {
       try {
         final response = await _supabase.from('products').select();
-        return response.map<Product>((p) => Product.fromJson(p)).toList();
+        return response.map<Product>((p) {
+          final product = Product.fromJson(p);
+          if (product.imageUrl != null && !product.imageUrl!.contains('http')) {
+            return product.copyWith(imageUrl: _supabase.storage
+                .from('product-images')
+                .getPublicUrl(product.imageUrl!));
+          }
+          return product;
+        }).toList();
       } catch (e) {
         print('Error fetching from Supabase, falling back to local: $e');
-        // Fallback to local database
         final db = await sqliteDb;
         final result = await db.query('products');
         return result.map((p) => Product.fromJson(p)).toList();
@@ -158,70 +146,53 @@ class DatabaseService {
 
   Future<void> insertProduct(Product product) async {
     final productJson = product.toJson();
-    
-    // Always save to local database first
     final db = await sqliteDb;
     await db.insert('products', productJson, conflictAlgorithm: ConflictAlgorithm.replace);
-    
-    // Then try to sync with Supabase if online
+
     if (await _isOnline()) {
       try {
         await _supabase.from('products').insert(productJson);
       } catch (e) {
         print('Error syncing to Supabase: $e');
-        // Product is still saved locally, so operation is not completely failed
       }
     }
   }
 
   Future<void> updateProduct(Product product) async {
     final productJson = product.toJson();
-    
-    // Always update local database first
     final db = await sqliteDb;
     await db.update('products', productJson, where: 'id = ?', whereArgs: [product.id]);
-    
-    // Then try to sync with Supabase if online
+
     if (await _isOnline()) {
       try {
         await _supabase.from('products').update(productJson).eq('id', product.id);
       } catch (e) {
         print('Error syncing update to Supabase: $e');
-        // Product is still updated locally, so operation is not completely failed
       }
     }
   }
 
-  // Enhanced update method that handles image updates
   Future<void> updateProductWithImage({
     required Product product,
     File? newImageFile,
     bool removeImage = false,
   }) async {
     try {
-      // Handle image update
       final updatedImageUrl = await updateProductImage(
         oldImageUrl: product.imageUrl,
         newImageFile: newImageFile,
         removeImage: removeImage,
       );
 
-      // Create updated product with new image URL
-      final updatedProduct = Product(
-        id: product.id,
-        name: product.name,
-        brand: product.brand,
-        category: product.category,
-        buyingPrice: product.buyingPrice,
-        sellingPrice: product.sellingPrice,
-        quantity: product.quantity,
-        description: product.description,
-        imageUrl: updatedImageUrl,
-        dateAdded: product.dateAdded,
-      );
-
-      // Update the product
+      final updatedProduct = product.copyWith(imageUrl: updatedImageUrl);
       await updateProduct(updatedProduct);
+
+      if (await _isOnline() && newImageFile != null && !updatedImageUrl!.startsWith('http')) {
+        final fileName = basename(updatedImageUrl); // Define fileName here
+        await _supabase.storage.from('product-images').upload(fileName, newImageFile);
+        final publicUrl = _supabase.storage.from('product-images').getPublicUrl(fileName);
+        await updateProduct(updatedProduct.copyWith(imageUrl: publicUrl));
+      }
     } catch (e) {
       print('Error updating product with image: $e');
       rethrow;
@@ -230,12 +201,9 @@ class DatabaseService {
 
   Future<void> insertSale(Sale sale) async {
     final saleJson = sale.toJson();
-    
-    // Always save to local database first
     final db = await sqliteDb;
     await db.insert('sales', saleJson, conflictAlgorithm: ConflictAlgorithm.replace);
-    
-    // Then try to sync with Supabase if online
+
     if (await _isOnline()) {
       try {
         await _supabase.from('sales').insert(saleJson);
@@ -327,20 +295,15 @@ class DatabaseService {
   }
 
   Future<void> deleteProduct(String id) async {
-    // Get the product first to handle image deletion
     final products = await getAllProducts();
     final product = products.where((p) => p.id == id).firstOrNull;
     
-    // Delete from local database first
     final db = await sqliteDb;
     await db.delete('products', where: 'id = ?', whereArgs: [id]);
     
-    // Try to delete from Supabase if online
     if (await _isOnline()) {
       try {
         await _supabase.from('products').delete().eq('id', id);
-        
-        // Delete associated image if it exists and is stored in Supabase
         if (product?.imageUrl != null) {
           await deleteProductImage(product!.imageUrl!);
         }
@@ -350,20 +313,17 @@ class DatabaseService {
     }
   }
 
-  // Method to sync local data with Supabase when connection is restored
   Future<void> syncWithSupabase() async {
     if (!await _isOnline()) return;
     
     try {
       final db = await sqliteDb;
       
-      // Sync products
       final localProducts = await db.query('products');
       for (final productData in localProducts) {
         await _supabase.from('products').upsert(productData);
       }
       
-      // Sync sales
       final localSales = await db.query('sales');
       for (final saleData in localSales) {
         await _supabase.from('sales').upsert(saleData);
@@ -382,5 +342,34 @@ class DatabaseService {
     } on SocketException catch (_) {
       return false;
     }
+  }
+}
+
+// Extension to allow copying Product with updated fields
+extension ProductCopyWith on Product {
+  Product copyWith({
+    String? id,
+    String? name,
+    String? category,
+    String? brand,
+    double? buyingPrice,
+    double? sellingPrice,
+    int? quantity,
+    String? description,
+    String? imageUrl,
+    DateTime? dateAdded,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      brand: brand ?? this.brand,
+      buyingPrice: buyingPrice ?? this.buyingPrice,
+      sellingPrice: sellingPrice ?? this.sellingPrice,
+      quantity: quantity ?? this.quantity,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      dateAdded: dateAdded ?? this.dateAdded,
+    );
   }
 }

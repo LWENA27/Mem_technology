@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
 
 class AddProductDialog extends StatefulWidget {
-  const AddProductDialog({super.key});
+  final Product? product; // For editing existing products
+  
+  const AddProductDialog({super.key, this.product});
 
   @override
   _AddProductDialogState createState() => _AddProductDialogState();
@@ -15,29 +16,343 @@ class AddProductDialog extends StatefulWidget {
 class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _categoryController = TextEditingController();
   final _brandController = TextEditingController();
+  final _categoryController = TextEditingController();
   final _buyingPriceController = TextEditingController();
   final _sellingPriceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
+  
+  File? _selectedImage;
+  String? _currentImageUrl;
+  bool _isLoading = false;
+  bool _isUploading = false;
+  
+  final ImagePicker _picker = ImagePicker();
+  final DatabaseService _dbService = DatabaseService.instance;
 
-  XFile? _imageFile;
-  String? _fileName;
+  // Predefined categories
+  final List<String> _categories = [
+    'Smartphones',
+    'Laptops',
+    'Tablets',
+    'Accessories',
+    'Audio',
+    'Gaming',
+    'Cameras',
+    'Smart Home',
+    'Wearables',
+    'Components',
+    'Other'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product != null) {
+      _populateFields();
+    }
+  }
+
+  void _populateFields() {
+    final product = widget.product!;
+    _nameController.text = product.name;
+    _brandController.text = product.brand;
+    _categoryController.text = product.category;
+    _buyingPriceController.text = product.buyingPrice.toString();
+    _sellingPriceController.text = product.sellingPrice.toString();
+    _quantityController.text = product.quantity.toString();
+    _descriptionController.text = product.description ?? '';
+    _currentImageUrl = product.imageUrl;
+  }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
     try {
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'Select Image Source',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _getImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _getImage(ImageSource.gallery);
+                  },
+                ),
+                if (_selectedImage != null || _currentImageUrl != null)
+                  ListTile(
+                    leading: const Icon(Icons.delete, color: Colors.red),
+                    title: const Text('Remove Image', style: TextStyle(color: Colors.red)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _selectedImage = null;
+                        _currentImageUrl = null;
+                      });
+                    },
+                  ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      _showErrorMessage('Error opening image picker: $e');
+    }
+  }
+
+  Future<void> _getImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
       if (pickedFile != null) {
         setState(() {
-          _imageFile = pickedFile;
-          _fileName = pickedFile.name;
+          _selectedImage = File(pickedFile.path);
+          _currentImageUrl = null; // Clear current URL when new image is selected
         });
       }
     } catch (e) {
+      _showErrorMessage('Error picking image: $e');
+    }
+  }
+
+  void _showErrorMessage(String message) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _showSuccessMessage(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _isUploading = _selectedImage != null;
+    });
+
+    try {
+      String? imageUrl = _currentImageUrl;
+
+      // Upload new image if selected
+      if (_selectedImage != null) {
+        setState(() => _isUploading = true);
+        imageUrl = await _dbService.uploadProductImage(_selectedImage!);
+        setState(() => _isUploading = false);
+        
+        if (imageUrl == null) {
+          _showErrorMessage('Failed to upload image. Product will be saved without image.');
+        }
+      }
+
+      final product = Product(
+        id: widget.product?.id, // Use existing ID for updates, null for new products
+        name: _nameController.text.trim(),
+        brand: _brandController.text.trim(),
+        category: _categoryController.text.trim(),
+        buyingPrice: double.parse(_buyingPriceController.text),
+        sellingPrice: double.parse(_sellingPriceController.text),
+        quantity: int.parse(_quantityController.text),
+        description: _descriptionController.text.trim().isEmpty 
+            ? null 
+            : _descriptionController.text.trim(),
+        imageUrl: imageUrl,
+        dateAdded: widget.product?.dateAdded ?? DateTime.now(),
+      );
+
+      if (widget.product == null) {
+        // Adding new product
+        await _dbService.insertProduct(product);
+        _showSuccessMessage('Product added successfully!');
+      } else {
+        // Updating existing product
+        await _dbService.updateProductWithImage(
+          product: product,
+          newImageFile: _selectedImage,
+          removeImage: _selectedImage == null && _currentImageUrl == null,
+        );
+        _showSuccessMessage('Product updated successfully!');
+      }
+
+      Navigator.of(context).pop(true); // Return true to indicate success
+    } catch (e) {
+      _showErrorMessage('Error saving product: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isUploading = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildImagePreview() {
+    if (_selectedImage != null) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            _selectedImage!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.grey[200],
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                    Text('Error loading image'),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } else if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
+      // Show current image from URL
+      if (_currentImageUrl!.startsWith('http')) {
+        return Container(
+          height: 200,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              _currentImageUrl!,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: Colors.grey[200],
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[200],
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                      Text('Error loading image'),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        // Local file path
+        return Container(
+          height: 200,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: File(_currentImageUrl!).existsSync()
+                ? Image.file(
+                    File(_currentImageUrl!),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                            Text('Error loading image'),
+                          ],
+                        ),
+                      );
+                    },
+                  )
+                : Container(
+                    color: Colors.grey[200],
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                        Text('Image not found'),
+                      ],
+                    ),
+                  ),
+          ),
+        );
+      }
+    } else {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey, style: BorderStyle.solid),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[100],
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate, size: 50, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Tap to add product image', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
       );
     }
   }
@@ -45,8 +360,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    _categoryController.dispose();
     _brandController.dispose();
+    _categoryController.dispose();
     _buyingPriceController.dispose();
     _sellingPriceController.dispose();
     _quantityController.dispose();
@@ -57,99 +372,198 @@ class _AddProductDialogState extends State<AddProductDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add New Product'),
-      content: SingleChildScrollView(
+      title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
+      content: SizedBox(
+        width: double.maxFinite,
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Product Name'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Enter product name' : null,
-              ),
-              TextFormField(
-                controller: _categoryController,
-                decoration: const InputDecoration(labelText: 'Category'),
-                validator: (value) => value!.isEmpty ? 'Enter category' : null,
-              ),
-              TextFormField(
-                controller: _brandController,
-                decoration: const InputDecoration(labelText: 'Brand'),
-                validator: (value) => value!.isEmpty ? 'Enter brand' : null,
-              ),
-              TextFormField(
-                controller: _buyingPriceController,
-                decoration: const InputDecoration(labelText: 'Buying Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? 'Enter buying price' : null,
-              ),
-              TextFormField(
-                controller: _sellingPriceController,
-                decoration: const InputDecoration(labelText: 'Selling Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? 'Enter selling price' : null,
-              ),
-              TextFormField(
-                controller: _quantityController,
-                decoration: const InputDecoration(labelText: 'Quantity'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter quantity' : null,
-              ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _pickImage,
-                child: const Text('Pick Product Image'),
-              ),
-              if (_fileName != null) ...[
-                const SizedBox(height: 8),
-                Text('Selected: $_fileName'),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Image section
+                GestureDetector(
+                  onTap: _isLoading ? null : _pickImage,
+                  child: _buildImagePreview(),
+                ),
+                if (_isUploading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Uploading image...', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 16),
+
+                // Form fields
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Product Name *',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter product name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                
+                TextFormField(
+                  controller: _brandController,
+                  decoration: const InputDecoration(
+                    labelText: 'Brand *',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter brand';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                
+                DropdownButtonFormField<String>(
+                  value: _categories.contains(_categoryController.text) 
+                      ? _categoryController.text 
+                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Category *',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _categories.map((category) {
+                    return DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      _categoryController.text = value;
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a category';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _buyingPriceController,
+                        decoration: const InputDecoration(
+                          labelText: 'Buying Price *',
+                          border: OutlineInputBorder(),
+                          prefixText: '\$ ',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          if (double.tryParse(value) == null) {
+                            return 'Invalid price';
+                          }
+                          if (double.parse(value) < 0) {
+                            return 'Price must be positive';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _sellingPriceController,
+                        decoration: const InputDecoration(
+                          labelText: 'Selling Price *',
+                          border: OutlineInputBorder(),
+                          prefixText: '\$ ',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          if (double.tryParse(value) == null) {
+                            return 'Invalid price';
+                          }
+                          if (double.parse(value) < 0) {
+                            return 'Price must be positive';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                TextFormField(
+                  controller: _quantityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Quantity *',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter quantity';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Invalid quantity';
+                    }
+                    if (int.parse(value) < 0) {
+                      return 'Quantity must be positive';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (Optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        TextButton(
-          onPressed: () async {
-            if (_formKey.currentState!.validate()) {
-              String? imageUrl;
-              if (_imageFile != null) {
-                imageUrl = await DatabaseService.instance
-                    .uploadProductImage(File(_imageFile!.path));
-              }
-
-              final product = Product(
-                id: const Uuid().v4(),
-                name: _nameController.text,
-                category: _categoryController.text,
-                brand: _brandController.text,
-                buyingPrice: double.parse(_buyingPriceController.text),
-                sellingPrice: double.parse(_sellingPriceController.text),
-                quantity: int.parse(_quantityController.text),
-                description: _descriptionController.text,
-                imageUrl: imageUrl,
-                dateAdded: DateTime.now(),
-              );
-
-              await DatabaseService.instance.insertProduct(product);
-              Navigator.pop(context, true);
-            }
-          },
-          child: const Text('Add'),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _saveProduct,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(widget.product == null ? 'Add Product' : 'Update Product'),
         ),
       ],
     );

@@ -31,7 +31,6 @@ class _EditProductDialogState extends State<EditProductDialog> {
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with existing product data
     _nameController = TextEditingController(text: widget.product.name);
     _brandController = TextEditingController(text: widget.product.brand);
     _categoryController = TextEditingController(text: widget.product.category);
@@ -66,7 +65,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
       if (image != null) {
         setState(() {
           _imageFile = File(image.path);
-          _imageUrl = image.path; // Update to show new image
+          _imageUrl = image.path;
         });
       }
     } catch (e) {
@@ -126,7 +125,12 @@ class _EditProductDialogState extends State<EditProductDialog> {
     setState(() => _isLoading = true);
 
     try {
-      // Create updated product object
+      final updatedImageUrl = await DatabaseService.instance.updateProductImage(
+        oldImageUrl: widget.product.imageUrl,
+        newImageFile: _imageFile,
+        removeImage: _imageUrl == null && widget.product.imageUrl != null,
+      );
+
       final updatedProduct = Product(
         id: widget.product.id,
         name: _nameController.text.trim(),
@@ -136,17 +140,20 @@ class _EditProductDialogState extends State<EditProductDialog> {
         sellingPrice: double.parse(_sellingPriceController.text),
         quantity: int.parse(_quantityController.text),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-        imageUrl: _imageUrl,
-        dateAdded: widget.product.dateAdded, // Keep original date
+        imageUrl: updatedImageUrl ?? (_imageFile?.path ?? widget.product.imageUrl),
+        dateAdded: widget.product.dateAdded,
       );
 
-      // Update the product in database
-      await DatabaseService.instance.updateProduct(updatedProduct);
+      await DatabaseService.instance.updateProductWithImage(
+        product: updatedProduct,
+        newImageFile: _imageFile,
+        removeImage: _imageUrl == null && widget.product.imageUrl != null,
+      );
 
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product updated successfully!')),
+          const SnackBar(content: Text('Product updated successfully! Saved locally for sync.')),
         );
       }
     } catch (e) {
@@ -229,7 +236,6 @@ class _EditProductDialogState extends State<EditProductDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Image section
                 Row(
                   children: [
                     _buildImagePreview(),
@@ -255,7 +261,6 @@ class _EditProductDialogState extends State<EditProductDialog> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Form fields
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -365,15 +370,17 @@ class _EditProductDialogState extends State<EditProductDialog> {
           onPressed: _isLoading ? null : () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _updateProduct,
-          child: _isLoading
-              ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Update'),
+        Flexible(
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _updateProduct,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Update'),
+          ),
         ),
       ],
     );

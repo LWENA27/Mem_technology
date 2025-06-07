@@ -30,22 +30,31 @@ class _CustomerViewState extends State<CustomerView> {
 
   Future<void> _loadProducts() async {
     setState(() => _isLoading = true);
-    final products = await DatabaseService.instance.getAvailableProducts();
-    final categories = products.map((p) => p.category).toSet();
-    
-    setState(() {
-      _products = products;
-      _filteredProducts = products;
-      _categories = {'All', ...categories};
-      _isLoading = false;
-    });
+    try {
+      final products = await DatabaseService.instance.getAvailableProducts();
+      final categories = products.map((p) => p.category).toSet();
+      
+      setState(() {
+        _products = products;
+        _filteredProducts = products;
+        _categories = {'All', ...categories};
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load products: $e')),
+      );
+    }
   }
 
   _filterProducts() {
     setState(() {
       _filteredProducts = _products.where((product) {
         final matchesSearch = product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                                    product.brand.toLowerCase().contains(_searchQuery.toLowerCase());
+                             product.brand.toLowerCase().contains(_searchQuery.toLowerCase());
         final matchesCategory = _selectedCategory == 'All' || product.category == _selectedCategory;
         return matchesSearch && matchesCategory;
       }).toList();
@@ -53,7 +62,7 @@ class _CustomerViewState extends State<CustomerView> {
   }
 
   _callOwner() async {
-    const phoneNumber = 'tel:+255745263981'; // Replace with actual phone number (add tel: prefix)
+    const phoneNumber = 'tel:+255745263981';
     if (await canLaunchUrl(Uri.parse(phoneNumber))) {
       await launchUrl(Uri.parse(phoneNumber));
     } else {
@@ -72,7 +81,6 @@ class _CustomerViewState extends State<CustomerView> {
     );
   }
 
-  // Improved image widget builder
   Widget _buildProductImage(Product product) {
     if (product.imageUrl == null || product.imageUrl!.isEmpty) {
       return Container(
@@ -85,40 +93,7 @@ class _CustomerViewState extends State<CustomerView> {
       );
     }
 
-    // Check if it's a network URL
-    if (product.imageUrl!.startsWith('http://') || product.imageUrl!.startsWith('https://')) {
-      return Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-          child: Image.network(
-            product.imageUrl!,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              print('Network image error: $error'); // Debug print
-              return Container(
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-              );
-            },
-          ),
-        ),
-      );
-    }
-
-    // Handle local file path
+    // Use Image.network for all cases, with fallback
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -126,51 +101,28 @@ class _CustomerViewState extends State<CustomerView> {
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-        child: FutureBuilder<bool>(
-          future: _checkFileExists(product.imageUrl!),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Container(
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              );
-            }
-            
-            if (snapshot.data == true) {
-              return Image.file(
-                File(product.imageUrl!),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  print('File image error: $error'); // Debug print
-                  return Container(
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                  );
-                },
-              );
-            } else {
-              return Container(
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-              );
-            }
+        child: Image.network(
+          product.imageUrl!,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            print('Image load error for ${product.imageUrl}: $error'); // Debug print
+            return Container(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+            );
           },
         ),
       ),
     );
-  }
-
-  // Helper method to check if file exists (runs in background)
-  Future<bool> _checkFileExists(String path) async {
-    try {
-      final file = File(path);
-      return await file.exists();
-    } catch (e) {
-      print('Error checking file existence: $e'); // Debug print
-      return false;
-    }
   }
 
   @override
@@ -270,7 +222,7 @@ class _CustomerViewState extends State<CustomerView> {
                                 children: [
                                   Expanded(
                                     flex: 3,
-                                    child: _buildProductImage(product), // Use the improved image builder
+                                    child: _buildProductImage(product),
                                   ),
                                   Expanded(
                                     flex: 2,
