@@ -72,6 +72,19 @@ class _CustomerViewState extends State<CustomerView> {
     }
   }
 
+  _sendWhatsAppMessage() async {
+    const phoneNumber = '+255745263981';
+    const message = 'Hello! I’m interested in your products. Can you assist me?';
+    final url = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not launch WhatsApp')),
+      );
+    }
+  }
+
   _logout() async {
     final supabase = SupabaseService().client;
     await supabase.auth.signOut();
@@ -93,7 +106,6 @@ class _CustomerViewState extends State<CustomerView> {
       );
     }
 
-    // Use Image.network for all cases, with fallback
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -114,7 +126,7 @@ class _CustomerViewState extends State<CustomerView> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            print('Image load error for ${product.imageUrl}: $error'); // Debug print
+            print('Image load error for ${product.imageUrl}: $error');
             return Container(
               color: Colors.grey.shade200,
               child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
@@ -136,6 +148,11 @@ class _CustomerViewState extends State<CustomerView> {
           IconButton(
             icon: const Icon(Icons.phone),
             onPressed: _callOwner,
+          ),
+          IconButton(
+            icon: const Icon(Icons.message), // Temporary fallback to Icons.message
+            color: Colors.green,
+            onPressed: _sendWhatsAppMessage,
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -215,71 +232,81 @@ class _CustomerViewState extends State<CustomerView> {
                           itemCount: _filteredProducts.length,
                           itemBuilder: (context, index) {
                             final product = _filteredProducts[index];
-                            return Card(
-                              elevation: 4,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: _buildProductImage(product),
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductDetailScreen(product: product),
                                   ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            product.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            product.brand,
-                                            style: TextStyle(color: Colors.grey.shade600),
-                                          ),
-                                          const Spacer(),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                '\$${product.sellingPrice.toStringAsFixed(2)}',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.green,
-                                                  fontSize: 16,
-                                                ),
+                                );
+                              },
+                              child: Card(
+                                elevation: 4,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: _buildProductImage(product),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              product.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
                                               ),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 2,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.blue.shade100,
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: Text(
-                                                  '${product.quantity} left',
-                                                  style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: Colors.blue.shade800,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              product.brand,
+                                              style: TextStyle(color: Colors.grey.shade600),
+                                            ),
+                                            const Spacer(),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  '\$${product.sellingPrice.toStringAsFixed(2)}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.green,
+                                                    fontSize: 16,
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.shade100,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Text(
+                                                    '${product.quantity} left',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.blue.shade800,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -292,6 +319,95 @@ class _CustomerViewState extends State<CustomerView> {
         onPressed: _callOwner,
         backgroundColor: Colors.green,
         child: const Icon(Icons.phone),
+      ),
+    );
+  }
+}
+
+class ProductDetailScreen extends StatelessWidget {
+  final Product product;
+
+  const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(product.name),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 300,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                child: Image.network(
+                  product.imageUrl ?? '',
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    print('Image load error for ${product.imageUrl}: $error');
+                    return Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              product.name,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              product.brand,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Price: \$${product.sellingPrice.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 20, color: Colors.green, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Quantity Left: ${product.quantity}',
+              style: TextStyle(color: Colors.blue.shade800, fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Description:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              product.description ?? 'No description available.',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Additional Photos: (Not available yet)',
+              style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
       ),
     );
   }
