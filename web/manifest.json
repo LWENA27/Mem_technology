@@ -1,6 +1,6 @@
 {
-    "name": "memtechnology_shop_v2",
-    "short_name": "memtechnology_shop_v2",
+    "name": "memtechnology",
+    "short_name": "memtechnology",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

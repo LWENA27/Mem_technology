@@ -1,4 +1,4 @@
-name: memtechnology_shop_v2
+name: memtechnology
 description: A new Flutter project.
 version: 1.0.0+1
 
@@ -16,6 +16,7 @@ dependencies:
   intl: ^0.18.0
   image_picker: ^1.0.0
   pdf: ^3.10.4 
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +25,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/app_icon.png

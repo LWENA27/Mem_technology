@@ -1,4 +1,4 @@
-package com.example.memtechnology_shop_v2
+package com.example.memtechnology
 
 import io.flutter.embedding.android.FlutterActivity
 

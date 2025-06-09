@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="memtechnology_shop_v2"
+        android:label="memtechnology"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

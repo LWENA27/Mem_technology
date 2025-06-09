@@ -6,8 +6,13 @@ import '../services/DatabaseService.dart';
 
 class AddProductDialog extends StatefulWidget {
   final Product? product; // For editing existing products
+  final VoidCallback onProductAdded; // Add this callback parameter
   
-  const AddProductDialog({super.key, this.product});
+  const AddProductDialog({
+    super.key, 
+    this.product,
+    required this.onProductAdded, // Make it required
+  });
 
   @override
   _AddProductDialogState createState() => _AddProductDialogState();
@@ -216,6 +221,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
         _showSuccessMessage('Product updated successfully!');
       }
 
+      // Call the callback to refresh the inventory list
+      widget.onProductAdded();
+      
       Navigator.of(context).pop(true); // Return true to indicate success
     } catch (e) {
       _showErrorMessage('Error saving product: $e');

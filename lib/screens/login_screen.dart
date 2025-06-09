@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memtechnology_shop_v2/services/supabase_service.dart';
+import 'package:memtechnology/services/supabase_service.dart';
 import 'admin_dashboard.dart';
 import 'customer_view.dart';
 
@@ -15,26 +15,166 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isCheckingSession = false;
+  bool _isSupabaseInitialized = false;
   String? _errorMessage;
+
+  // MEM Technology Color Scheme (Refined from logo)
+  static const Color primaryGreen = Color(0xFF4CAF50); // Vibrant green from logo
+  static const Color darkGray = Color(0xFF424242);    // Dark gray from text and "M"
+  static const Color lightGray = Color(0xFF757575);   // Light gray for secondary text
+  static const Color backgroundColor = Color(0xFFF5F5F5); // Light background
 
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
+    // Initialize Supabase when login screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeSupabase();
+    });
+  }
+
+  _initializeSupabase() async {
+    try {
+      await SupabaseService.instance.initialize();
+      setState(() {
+        _isSupabaseInitialized = true;
+      });
+      // Check login status after initialization
+      _checkLoginStatus();
+    } catch (e) {
+      print('Error initializing Supabase: $e');
+      setState(() {
+        _errorMessage = 'Failed to initialize authentication: $e';
+        _isCheckingSession = false;
+      });
+    }
   }
 
   _checkLoginStatus() async {
+    if (!mounted || !_isSupabaseInitialized) return;
+    
+    setState(() {
+      _isCheckingSession = true;
+    });
+
     try {
-      final supabase = SupabaseService().client;
+      print('Starting login status check...');
+      
+      final supabase = SupabaseService.instance.client;
       final session = supabase.auth.currentSession;
-      if (session != null) {
+      
+      print('Session exists: ${session != null}');
+      
+      if (session != null && mounted) {
+        print('Checking user role for ID: ${session.user.id}');
+        
+        // Add timeout to prevent hanging
         final userData = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
-            .maybeSingle();
-        if (userData != null) {
-          if (userData['role'] == 'admin') {
+            .maybeSingle()
+            .timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                print('Database query timed out');
+                return null;
+              },
+            );
+        
+        print('User data retrieved: $userData');
+        
+        if (userData != null && mounted) {
+          final role = userData['role'];
+          print('User role: $role');
+          
+          if (role == 'admin') {
+            print('Navigating to Admin Dashboard');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            );
+          } else {
+            print('Navigating to Customer View');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const CustomerView()),
+            );
+          }
+        } else if (mounted) {
+          print('No user data found');
+          setState(() {
+            _errorMessage = 'No role assigned. Please contact support.';
+            _isCheckingSession = false;
+          });
+        }
+      } else {
+        print('No active session found');
+        if (mounted) {
+          setState(() {
+            _isCheckingSession = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error during login status check: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Connection error. Please try again.';
+          _isCheckingSession = false;
+        });
+      }
+    }
+  }
+
+  _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!_isSupabaseInitialized) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication not ready. Please wait.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      print('Starting login process...');
+      
+      final response = await SupabaseService.instance.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('Login request timed out. Please check your connection.');
+        },
+      );
+
+      print('Login successful for user: ${response.user?.id}');
+
+      if (mounted && response.user != null) {
+        final supabase = SupabaseService.instance.client;
+        final userData = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', response.user!.id)
+            .maybeSingle()
+            .timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw Exception('Database query timed out');
+              },
+            );
+
+        if (userData != null && mounted) {
+          final role = userData['role'];
+          print('Login: User role is $role');
+          
+          if (role == 'admin') {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
@@ -43,64 +183,78 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => const CustomerView()),
             );
           }
-        } else {
-          _errorMessage = 'No role assigned for this user. Please contact support.';
+        } else if (mounted) {
+          setState(() => _errorMessage = 'No role assigned. Please contact support.');
         }
       }
     } catch (e) {
-      _errorMessage = 'Login check failed: $e';
-    }
-  }
-
-  _login() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    final supabase = SupabaseService().client;
-
-    try {
-      final response = await supabase.auth.signInWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      final userData = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', response.user!.id)
-          .maybeSingle();
-      if (userData != null) {
-        if (userData['role'] == 'admin') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const AdminDashboard()),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const CustomerView()),
-          );
-        }
-      } else {
-        _errorMessage = 'No role assigned for this user. Please contact support.';
+      print('Login error: $e');
+      if (mounted) {
+        setState(() => _errorMessage = 'Login failed: ${e.toString()}');
       }
-    } catch (e) {
-      _errorMessage = 'Login failed: $e';
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   _continueAsGuest() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const CustomerView()),
-    );
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const CustomerView()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading screen while checking session
+    if (_isCheckingSession || !_isSupabaseInitialized) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(
+                color: primaryGreen,
+                strokeWidth: 3,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                !_isSupabaseInitialized 
+                    ? 'Initializing authentication...'
+                    : 'Checking login status...',
+                style: const TextStyle(
+                  color: lightGray,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 40),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isCheckingSession = false;
+                    _errorMessage = null;
+                  });
+                },
+                child: const Text(
+                  'Skip Check',
+                  style: TextStyle(
+                    color: primaryGreen,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -108,42 +262,73 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.store,
-                  size: 80,
-                  color: Colors.blue,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'MEMTECHNOLOGY',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: primaryGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryGreen.withOpacity(0.3),
+                        spreadRadius: 4,
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.store,
+                    size: 60,
+                    color: Colors.white,
                   ),
                 ),
-                Text(
+                const SizedBox(height: 24),
+                const Text(
+                  'MEMTECHNOLOGY',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: darkGray,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Text(
                   'Electronics Shop',
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
+                    fontSize: 18,
+                    color: lightGray,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 40),
                 Card(
                   elevation: 8,
+                  shadowColor: Colors.grey.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         children: [
                           TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Email',
-                              prefixIcon: Icon(Icons.email),
-                              border: OutlineInputBorder(),
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon: const Icon(Icons.email, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -156,10 +341,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: true,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Password',
-                              prefixIcon: Icon(Icons.lock),
-                              border: OutlineInputBorder(),
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon: const Icon(Icons.lock, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -169,30 +364,79 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           if (_errorMessage != null) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              _errorMessage!,
-                              style: const TextStyle(color: Colors.red),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: TextStyle(color: Colors.red.shade600),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 32),
                           SizedBox(
                             width: double.infinity,
-                            height: 50,
+                            height: 52,
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryGreen,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                                shadowColor: primaryGreen.withOpacity(0.3),
+                              ),
                               child: _isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text('LOGIN', style: TextStyle(fontSize: 16)),
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    )
+                                  : const Text(
+                                      'LOGIN',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
-                            height: 50,
+                            height: 52,
                             child: OutlinedButton(
                               onPressed: _continueAsGuest,
-                              child: const Text('CONTINUE AS GUEST', style: TextStyle(fontSize: 16)),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: primaryGreen,
+                                side: const BorderSide(color: primaryGreen, width: 2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'CONTINUE AS GUEST',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -200,25 +444,126 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                    );
+                    if (mounted) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => const RegisterScreen()),
+                      );
+                    }
                   },
-                  child: const Text('Don\'t have an account? Register'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: primaryGreen,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  child: const Text(
+                    'Don\'t have an account? Register',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(15),
+                const SizedBox(height: 24),
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          primaryGreen.withOpacity(0.05),
+                          primaryGreen.withOpacity(0.1),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
                     child: Column(
                       children: [
-                        Text('Demo Credentials:', style: TextStyle(fontWeight: FontWeight.bold)),
-                        SizedBox(height: 5),
-                        Text('Admin: admin@example.com / admin123'),
-                        Text('Customer: customer@example.com / customer123'),
+                        const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: primaryGreen, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Demo Credentials',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: darkGray,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: primaryGreen.withOpacity(0.2)),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: primaryGreen,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'Admin',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'admin@example.com / admin123',
+                                      style: TextStyle(color: darkGray, fontSize: 14),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: lightGray,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'Customer',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'customer@example.com / customer123',
+                                      style: TextStyle(color: darkGray, fontSize: 14),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -247,6 +592,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  // MEM Technology Color Scheme (Refined from logo)
+  static const Color primaryGreen = Color(0xFF4CAF50); // Vibrant green from logo
+  static const Color darkGray = Color(0xFF424242);    // Dark gray from text and "M"
+  static const Color lightGray = Color(0xFF757575);   // Light gray for secondary text
+  static const Color backgroundColor = Color(0xFFF5F5F5); // Light background
+
   _register() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -254,40 +605,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-    final supabase = SupabaseService().client;
 
     try {
-      // Sign up user
-      final response = await supabase.auth.signUp(
+      print('Starting registration process...');
+      
+      // Sign up user with timeout
+      final response = await SupabaseService.instance.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
+        data: {
+          'name': _nameController.text.trim(),
+        },
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('Registration request timed out. Please check your connection.');
+        },
       );
 
-      if (response.user != null) {
-        // Insert user profile with default role 'customer'
+      if (response.user != null && mounted) {
+        print('User created: ${response.user!.id}');
+        
+        // Insert user profile with timeout
+        final supabase = SupabaseService.instance.client;
         await supabase.from('profiles').insert({
           'id': response.user!.id,
           'email': _emailController.text.trim(),
           'name': _nameController.text.trim(),
           'role': 'customer',
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please check your email to verify your account.')),
+        }).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('Profile creation timed out');
+          },
         );
-        Navigator.of(context).pop(); // Return to login screen
+
+        print('Profile created successfully');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Registration successful! Please check your email to verify your account.',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: primaryGreen,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      _errorMessage = 'Registration failed: $e';
+      print('Registration error: $e');
+      if (mounted) {
+        setState(() => _errorMessage = 'Registration failed: ${e.toString()}');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: primaryGreen,
+        elevation: 4,
+        shadowColor: primaryGreen.withOpacity(0.3),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Register',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -295,35 +702,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.person_add,
-                  size: 80,
-                  color: Colors.blue,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: primaryGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryGreen.withOpacity(0.3),
+                        spreadRadius: 4,
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.person_add,
+                    size: 60,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  'Register',
+                const SizedBox(height: 24),
+                const Text(
+                  'Create Account',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
+                    color: darkGray,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Text(
+                  'Join MEMTECHNOLOGY',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: lightGray,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 40),
                 Card(
                   elevation: 8,
+                  shadowColor: Colors.grey.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         children: [
                           TextFormField(
                             controller: _nameController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Full Name',
-                              prefixIcon: Icon(Icons.person),
-                              border: OutlineInputBorder(),
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon: const Icon(Icons.person, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -335,10 +780,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Email',
-                              prefixIcon: Icon(Icons.email),
-                              border: OutlineInputBorder(),
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon: const Icon(Icons.email, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -351,10 +806,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: true,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Password',
-                              prefixIcon: Icon(Icons.lock),
-                              border: OutlineInputBorder(),
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon: const Icon(Icons.lock, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -367,29 +832,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                           ),
                           if (_errorMessage != null) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              _errorMessage!,
-                              style: const TextStyle(color: Colors.red),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: TextStyle(color: Colors.red.shade600),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 32),
                           SizedBox(
                             width: double.infinity,
-                            height: 50,
+                            height: 52,
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryGreen,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                                shadowColor: primaryGreen.withOpacity(0.3),
+                              ),
                               child: _isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text('REGISTER', style: TextStyle(fontSize: 16)),
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    )
+                                  : const Text(
+                                      'CREATE ACCOUNT',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 20),
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).pop();
+                              if (mounted) {
+                                Navigator.of(context).pop();
+                              }
                             },
-                            child: const Text('Back to Login'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: primaryGreen,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            child: const Text(
+                              'Already have an account? Login',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ],
                       ),
