@@ -34,12 +34,21 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
     setState(() => _isLoading = true);
 
     final quantity = int.parse(_quantityController.text);
+    final unitPrice = _selectedProduct!.sellingPrice;
+    final totalPrice = quantity * unitPrice;
+    if (unitPrice <= 0 || totalPrice <= 0) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sale price must be greater than zero.')),
+      );
+      return;
+    }
     final sale = Sale(
       productId: _selectedProduct!.id,
       productName: _selectedProduct!.name,
       quantity: quantity,
-      unitPrice: _selectedProduct!.sellingPrice,
-      totalPrice: quantity * _selectedProduct!.sellingPrice,
+      unitPrice: unitPrice,
+      totalPrice: totalPrice,
       customerName: _customerNameController.text.trim(),
       customerPhone: _customerPhoneController.text.trim(),
       saleDate: DateTime.now(),

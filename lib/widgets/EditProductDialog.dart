@@ -22,7 +22,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
   late TextEditingController _sellingPriceController;
   late TextEditingController _quantityController;
   late TextEditingController _descriptionController;
-  
+
   String? _imageUrl;
   File? _imageFile;
   bool _isLoading = false;
@@ -34,10 +34,14 @@ class _EditProductDialogState extends State<EditProductDialog> {
     _nameController = TextEditingController(text: widget.product.name);
     _brandController = TextEditingController(text: widget.product.brand);
     _categoryController = TextEditingController(text: widget.product.category);
-    _buyingPriceController = TextEditingController(text: widget.product.buyingPrice.toString());
-    _sellingPriceController = TextEditingController(text: widget.product.sellingPrice.toString());
-    _quantityController = TextEditingController(text: widget.product.quantity.toString());
-    _descriptionController = TextEditingController(text: widget.product.description ?? '');
+    _buyingPriceController =
+        TextEditingController(text: widget.product.buyingPrice.toString());
+    _sellingPriceController =
+        TextEditingController(text: widget.product.sellingPrice.toString());
+    _quantityController =
+        TextEditingController(text: widget.product.quantity.toString());
+    _descriptionController =
+        TextEditingController(text: widget.product.description ?? '');
     _imageUrl = widget.product.imageUrl;
   }
 
@@ -61,7 +65,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         setState(() {
           _imageFile = File(image.path);
@@ -139,8 +143,11 @@ class _EditProductDialogState extends State<EditProductDialog> {
         buyingPrice: double.parse(_buyingPriceController.text),
         sellingPrice: double.parse(_sellingPriceController.text),
         quantity: int.parse(_quantityController.text),
-        description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-        imageUrl: updatedImageUrl ?? (_imageFile?.path ?? widget.product.imageUrl),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        imageUrl:
+            updatedImageUrl ?? (_imageFile?.path ?? widget.product.imageUrl),
         dateAdded: widget.product.dateAdded,
       );
 
@@ -153,7 +160,9 @@ class _EditProductDialogState extends State<EditProductDialog> {
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product updated successfully! Saved locally for sync.')),
+          const SnackBar(
+              content: Text(
+                  'Product updated successfully! Saved locally for sync.')),
         );
       }
     } catch (e) {
@@ -212,7 +221,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
         );
       }
     }
-    
+
     return Container(
       height: 100,
       width: 100,
@@ -244,14 +253,18 @@ class _EditProductDialogState extends State<EditProductDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Product Image', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text('Product Image',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 8),
                           ElevatedButton.icon(
                             onPressed: _showImageSourceDialog,
                             icon: const Icon(Icons.camera_alt, size: 16),
-                            label: Text(_imageUrl != null ? 'Change Image' : 'Add Image'),
+                            label: Text(_imageUrl != null
+                                ? 'Change Image'
+                                : 'Add Image'),
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                             ),
                           ),
                         ],
@@ -260,17 +273,17 @@ class _EditProductDialogState extends State<EditProductDialog> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Product Name',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value?.isEmpty ?? true ? 'Please enter product name' : null,
+                  validator: (value) => value?.isEmpty ?? true
+                      ? 'Please enter product name'
+                      : null,
                 ),
                 const SizedBox(height: 16),
-                
                 Row(
                   children: [
                     Expanded(
@@ -280,7 +293,9 @@ class _EditProductDialogState extends State<EditProductDialog> {
                           labelText: 'Brand',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) => value?.isEmpty ?? true ? 'Please enter brand' : null,
+                        validator: (value) => value?.isEmpty ?? true
+                            ? 'Please enter brand'
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -291,13 +306,14 @@ class _EditProductDialogState extends State<EditProductDialog> {
                           labelText: 'Category',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) => value?.isEmpty ?? true ? 'Please enter category' : null,
+                        validator: (value) => value?.isEmpty ?? true
+                            ? 'Please enter category'
+                            : null,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                
                 Row(
                   children: [
                     Expanded(
@@ -306,12 +322,14 @@ class _EditProductDialogState extends State<EditProductDialog> {
                         decoration: const InputDecoration(
                           labelText: 'Buying Price',
                           border: OutlineInputBorder(),
-                          prefixText: '\$',
+                          prefixText: 'TSH ',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value?.isEmpty ?? true) return 'Please enter buying price';
-                          if (double.tryParse(value!) == null) return 'Please enter valid price';
+                          if (value?.isEmpty ?? true)
+                            return 'Please enter buying price';
+                          if (double.tryParse(value!) == null)
+                            return 'Please enter valid price';
                           return null;
                         },
                       ),
@@ -323,12 +341,14 @@ class _EditProductDialogState extends State<EditProductDialog> {
                         decoration: const InputDecoration(
                           labelText: 'Selling Price',
                           border: OutlineInputBorder(),
-                          prefixText: '\$',
+                          prefixText: 'TSH ',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value?.isEmpty ?? true) return 'Please enter selling price';
-                          if (double.tryParse(value!) == null) return 'Please enter valid price';
+                          if (value?.isEmpty ?? true)
+                            return 'Please enter selling price';
+                          if (double.tryParse(value!) == null)
+                            return 'Please enter valid price';
                           return null;
                         },
                       ),
@@ -336,7 +356,6 @@ class _EditProductDialogState extends State<EditProductDialog> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
                 TextFormField(
                   controller: _quantityController,
                   decoration: const InputDecoration(
@@ -346,12 +365,12 @@ class _EditProductDialogState extends State<EditProductDialog> {
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value?.isEmpty ?? true) return 'Please enter quantity';
-                    if (int.tryParse(value!) == null) return 'Please enter valid quantity';
+                    if (int.tryParse(value!) == null)
+                      return 'Please enter valid quantity';
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-                
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(

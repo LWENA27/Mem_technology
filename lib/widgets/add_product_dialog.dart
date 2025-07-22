@@ -7,9 +7,9 @@ import '../services/DatabaseService.dart';
 class AddProductDialog extends StatefulWidget {
   final Product? product; // For editing existing products
   final VoidCallback onProductAdded; // Add this callback parameter
-  
+
   const AddProductDialog({
-    super.key, 
+    super.key,
     this.product,
     required this.onProductAdded, // Make it required
   });
@@ -27,12 +27,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _sellingPriceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   File? _selectedImage;
   String? _currentImageUrl;
   bool _isLoading = false;
   bool _isUploading = false;
-  
+
   final ImagePicker _picker = ImagePicker();
   final DatabaseService _dbService = DatabaseService.instance;
 
@@ -106,7 +106,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 if (_selectedImage != null || _currentImageUrl != null)
                   ListTile(
                     leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text('Remove Image', style: TextStyle(color: Colors.red)),
+                    title: const Text('Remove Image',
+                        style: TextStyle(color: Colors.red)),
                     onTap: () {
                       Navigator.pop(context);
                       setState(() {
@@ -138,7 +139,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
-          _currentImageUrl = null; // Clear current URL when new image is selected
+          _currentImageUrl =
+              null; // Clear current URL when new image is selected
         });
       }
     } catch (e) {
@@ -186,22 +188,24 @@ class _AddProductDialogState extends State<AddProductDialog> {
         setState(() => _isUploading = true);
         imageUrl = await _dbService.uploadProductImage(_selectedImage!);
         setState(() => _isUploading = false);
-        
+
         if (imageUrl == null) {
-          _showErrorMessage('Failed to upload image. Product will be saved without image.');
+          _showErrorMessage(
+              'Failed to upload image. Product will be saved without image.');
         }
       }
 
       final product = Product(
-        id: widget.product?.id, // Use existing ID for updates, null for new products
+        id: widget
+            .product?.id, // Use existing ID for updates, null for new products
         name: _nameController.text.trim(),
         brand: _brandController.text.trim(),
         category: _categoryController.text.trim(),
         buyingPrice: double.parse(_buyingPriceController.text),
         sellingPrice: double.parse(_sellingPriceController.text),
         quantity: int.parse(_quantityController.text),
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
+        description: _descriptionController.text.trim().isEmpty
+            ? null
             : _descriptionController.text.trim(),
         imageUrl: imageUrl,
         dateAdded: widget.product?.dateAdded ?? DateTime.now(),
@@ -223,7 +227,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       // Call the callback to refresh the inventory list
       widget.onProductAdded();
-      
+
       Navigator.of(context).pop(true); // Return true to indicate success
     } catch (e) {
       _showErrorMessage('Error saving product: $e');
@@ -324,7 +328,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                            Icon(Icons.broken_image,
+                                size: 50, color: Colors.grey),
                             Text('Error loading image'),
                           ],
                         ),
@@ -336,7 +341,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     child: const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                        Icon(Icons.image_not_supported,
+                            size: 50, color: Colors.grey),
                         Text('Image not found'),
                       ],
                     ),
@@ -358,7 +364,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
           children: [
             Icon(Icons.add_photo_alternate, size: 50, color: Colors.grey),
             SizedBox(height: 8),
-            Text('Tap to add product image', style: TextStyle(color: Colors.grey)),
+            Text('Tap to add product image',
+                style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -405,7 +412,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 8),
-                        Text('Uploading image...', style: TextStyle(fontSize: 12)),
+                        Text('Uploading image...',
+                            style: TextStyle(fontSize: 12)),
                       ],
                     ),
                   ),
@@ -426,7 +434,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                
+
                 TextFormField(
                   controller: _brandController,
                   decoration: const InputDecoration(
@@ -441,10 +449,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                
+
                 DropdownButtonFormField<String>(
-                  value: _categories.contains(_categoryController.text) 
-                      ? _categoryController.text 
+                  value: _categories.contains(_categoryController.text)
+                      ? _categoryController.text
                       : null,
                   decoration: const InputDecoration(
                     labelText: 'Category *',
@@ -469,7 +477,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -478,7 +486,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                         decoration: const InputDecoration(
                           labelText: 'Buying Price *',
                           border: OutlineInputBorder(),
-                          prefixText: '\$ ',
+                          prefixText: 'TSH ',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -502,7 +510,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                         decoration: const InputDecoration(
                           labelText: 'Selling Price *',
                           border: OutlineInputBorder(),
-                          prefixText: '\$ ',
+                          prefixText: 'TSH ',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -522,7 +530,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 TextFormField(
                   controller: _quantityController,
                   decoration: const InputDecoration(
@@ -544,7 +552,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                
+
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(

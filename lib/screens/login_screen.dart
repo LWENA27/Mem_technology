@@ -20,9 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
 
   // MEM Technology Color Scheme (Refined from logo)
-  static const Color primaryGreen = Color(0xFF4CAF50); // Vibrant green from logo
-  static const Color darkGray = Color(0xFF424242);    // Dark gray from text and "M"
-  static const Color lightGray = Color(0xFF757575);   // Light gray for secondary text
+  static const Color primaryGreen =
+      Color(0xFF4CAF50); // Vibrant green from logo
+  static const Color darkGray =
+      Color(0xFF424242); // Dark gray from text and "M"
+  static const Color lightGray =
+      Color(0xFF757575); // Light gray for secondary text
   static const Color backgroundColor = Color(0xFFF5F5F5); // Light background
 
   @override
@@ -53,22 +56,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
   _checkLoginStatus() async {
     if (!mounted || !_isSupabaseInitialized) return;
-    
+
     setState(() {
       _isCheckingSession = true;
     });
 
     try {
       print('Starting login status check...');
-      
+
       final supabase = SupabaseService.instance.client;
       final session = supabase.auth.currentSession;
-      
+
       print('Session exists: ${session != null}');
-      
+
       if (session != null && mounted) {
         print('Checking user role for ID: ${session.user.id}');
-        
+
         // Add timeout to prevent hanging
         final userData = await supabase
             .from('profiles')
@@ -76,19 +79,19 @@ class _LoginScreenState extends State<LoginScreen> {
             .eq('id', session.user.id)
             .maybeSingle()
             .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                print('Database query timed out');
-                return null;
-              },
-            );
-        
+          const Duration(seconds: 10),
+          onTimeout: () {
+            print('Database query timed out');
+            return null;
+          },
+        );
+
         print('User data retrieved: $userData');
-        
+
         if (userData != null && mounted) {
           final role = userData['role'];
           print('User role: $role');
-          
+
           if (role == 'admin') {
             print('Navigating to Admin Dashboard');
             Navigator.of(context).pushReplacement(
@@ -143,14 +146,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       print('Starting login process...');
-      
-      final response = await SupabaseService.instance.signInWithPassword(
+
+      final response = await SupabaseService.instance
+          .signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 15),
         onTimeout: () {
-          throw Exception('Login request timed out. Please check your connection.');
+          throw Exception(
+              'Login request timed out. Please check your connection.');
         },
       );
 
@@ -164,16 +170,16 @@ class _LoginScreenState extends State<LoginScreen> {
             .eq('id', response.user!.id)
             .maybeSingle()
             .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw Exception('Database query timed out');
-              },
-            );
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('Database query timed out');
+          },
+        );
 
         if (userData != null && mounted) {
           final role = userData['role'];
           print('Login: User role is $role');
-          
+
           if (role == 'admin') {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
@@ -184,7 +190,8 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
         } else if (mounted) {
-          setState(() => _errorMessage = 'No role assigned. Please contact support.');
+          setState(() =>
+              _errorMessage = 'No role assigned. Please contact support.');
         }
       }
     } catch (e) {
@@ -216,35 +223,17 @@ class _LoginScreenState extends State<LoginScreen> {
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(
+            children: const [
+              CircularProgressIndicator(
                 color: primaryGreen,
                 strokeWidth: 3,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
-                !_isSupabaseInitialized 
-                    ? 'Initializing authentication...'
-                    : 'Checking login status...',
-                style: const TextStyle(
+                'Initializing authentication...',
+                style: TextStyle(
                   color: lightGray,
                   fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 40),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _isCheckingSession = false;
-                    _errorMessage = null;
-                  });
-                },
-                child: const Text(
-                  'Skip Check',
-                  style: TextStyle(
-                    color: primaryGreen,
-                    fontSize: 14,
-                  ),
                 ),
               ),
             ],
@@ -318,14 +307,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: 'Email',
                               labelStyle: const TextStyle(color: lightGray),
-                              prefixIcon: const Icon(Icons.email, color: primaryGreen),
+                              prefixIcon:
+                                  const Icon(Icons.email, color: primaryGreen),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
                               ),
                               filled: true,
                               fillColor: backgroundColor,
@@ -344,14 +335,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: const TextStyle(color: lightGray),
-                              prefixIcon: const Icon(Icons.lock, color: primaryGreen),
+                              prefixIcon:
+                                  const Icon(Icons.lock, color: primaryGreen),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
                               ),
                               filled: true,
                               fillColor: backgroundColor,
@@ -374,12 +367,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                                  Icon(Icons.error_outline,
+                                      color: Colors.red.shade600, size: 20),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: TextStyle(color: Colors.red.shade600),
+                                      style:
+                                          TextStyle(color: Colors.red.shade600),
                                     ),
                                   ),
                                 ],
@@ -424,7 +419,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: _continueAsGuest,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: primaryGreen,
-                                side: const BorderSide(color: primaryGreen, width: 2),
+                                side: const BorderSide(
+                                    color: primaryGreen, width: 2),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -456,116 +452,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   style: TextButton.styleFrom(
                     foregroundColor: primaryGreen,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
                   child: const Text(
                     'Don\'t have an account? Register',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [
-                          primaryGreen.withOpacity(0.05),
-                          primaryGreen.withOpacity(0.1),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.info_outline, color: primaryGreen, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              'Demo Credentials',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: darkGray,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: primaryGreen.withOpacity(0.2)),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: primaryGreen,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'Admin',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Expanded(
-                                    child: Text(
-                                      'admin@example.com / admin123',
-                                      style: TextStyle(color: darkGray, fontSize: 14),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: lightGray,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'Customer',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Expanded(
-                                    child: Text(
-                                      'customer@example.com / customer123',
-                                      style: TextStyle(color: darkGray, fontSize: 14),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ],
@@ -593,9 +485,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _errorMessage;
 
   // MEM Technology Color Scheme (Refined from logo)
-  static const Color primaryGreen = Color(0xFF4CAF50); // Vibrant green from logo
-  static const Color darkGray = Color(0xFF424242);    // Dark gray from text and "M"
-  static const Color lightGray = Color(0xFF757575);   // Light gray for secondary text
+  static const Color primaryGreen =
+      Color(0xFF4CAF50); // Vibrant green from logo
+  static const Color darkGray =
+      Color(0xFF424242); // Dark gray from text and "M"
+  static const Color lightGray =
+      Color(0xFF757575); // Light gray for secondary text
   static const Color backgroundColor = Color(0xFFF5F5F5); // Light background
 
   _register() async {
@@ -608,7 +503,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       print('Starting registration process...');
-      
+
       // Sign up user with timeout
       final response = await SupabaseService.instance.signUp(
         email: _emailController.text.trim(),
@@ -619,13 +514,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ).timeout(
         const Duration(seconds: 15),
         onTimeout: () {
-          throw Exception('Registration request timed out. Please check your connection.');
+          throw Exception(
+              'Registration request timed out. Please check your connection.');
         },
       );
 
       if (response.user != null && mounted) {
         print('User created: ${response.user!.id}');
-        
+
         // Insert user profile with timeout
         final supabase = SupabaseService.instance.client;
         await supabase.from('profiles').insert({
@@ -659,7 +555,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               backgroundColor: primaryGreen,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
               duration: const Duration(seconds: 3),
             ),
           );
@@ -758,14 +655,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             decoration: InputDecoration(
                               labelText: 'Full Name',
                               labelStyle: const TextStyle(color: lightGray),
-                              prefixIcon: const Icon(Icons.person, color: primaryGreen),
+                              prefixIcon:
+                                  const Icon(Icons.person, color: primaryGreen),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
                               ),
                               filled: true,
                               fillColor: backgroundColor,
@@ -783,14 +682,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             decoration: InputDecoration(
                               labelText: 'Email',
                               labelStyle: const TextStyle(color: lightGray),
-                              prefixIcon: const Icon(Icons.email, color: primaryGreen),
+                              prefixIcon:
+                                  const Icon(Icons.email, color: primaryGreen),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
                               ),
                               filled: true,
                               fillColor: backgroundColor,
@@ -809,14 +710,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: const TextStyle(color: lightGray),
-                              prefixIcon: const Icon(Icons.lock, color: primaryGreen),
+                              prefixIcon:
+                                  const Icon(Icons.lock, color: primaryGreen),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primaryGreen, width: 2),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
                               ),
                               filled: true,
                               fillColor: backgroundColor,
@@ -842,12 +745,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                                  Icon(Icons.error_outline,
+                                      color: Colors.red.shade600, size: 20),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: TextStyle(color: Colors.red.shade600),
+                                      style:
+                                          TextStyle(color: Colors.red.shade600),
                                     ),
                                   ),
                                 ],
@@ -893,11 +798,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: primaryGreen,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
                             ),
                             child: const Text(
                               'Already have an account? Login',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],

@@ -1,14 +1,40 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
+  // Update admin email
+  Future<void> updateEmail(String newEmail) async {
+    if (!_initialized) await initialize();
+    final user = client.auth.currentUser;
+    if (user == null) throw Exception('No user logged in');
+    final response =
+        await client.auth.updateUser(UserAttributes(email: newEmail));
+    if (response.user == null) {
+      throw Exception('Failed to update email. Response: '
+          '${response.toString()}');
+    }
+  }
+
+  // Update admin password
+  Future<void> updatePassword(String newPassword) async {
+    if (!_initialized) await initialize();
+    final user = client.auth.currentUser;
+    if (user == null) throw Exception('No user logged in');
+    final response =
+        await client.auth.updateUser(UserAttributes(password: newPassword));
+    if (response.user == null) {
+      throw Exception('Failed to update password. Response: '
+          '${response.toString()}');
+    }
+  }
+
   static SupabaseService? _instance;
   static bool _initialized = false;
-  
+
   static SupabaseService get instance {
     _instance ??= SupabaseService._internal();
     return _instance!;
   }
-  
+
   SupabaseService._internal();
 
   // Initialize Supabase only when authentication is needed
@@ -17,20 +43,21 @@ class SupabaseService {
       try {
         await Supabase.initialize(
           url: 'https://kzjgdeqfmxkmpmadtbpb.supabase.co',
-          anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434',
+          anonKey:
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434',
         );
         _initialized = true;
-        
+
         // Listen for auth state changes and restore session
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
           final session = data.session;
           if (session != null) {
-            print('Auth state changed, session active: ${session.user?.id}');
+            print('Auth state changed, session active: ${session.user.id}');
           } else {
             print('No active session');
           }
         });
-        
+
         print('Supabase initialized successfully');
       } catch (e) {
         _initialized = false;
@@ -41,7 +68,8 @@ class SupabaseService {
 
   SupabaseClient get client {
     if (!_initialized) {
-      throw Exception('Supabase client not initialized. Call initialize() first.');
+      throw Exception(
+          'Supabase client not initialized. Call initialize() first.');
     }
     return Supabase.instance.client;
   }

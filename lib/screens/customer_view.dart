@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../services/supabase_service.dart';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
 import 'login_screen.dart';
@@ -35,9 +34,11 @@ class _CustomerViewState extends State<CustomerView> {
   Future<void> _loadProducts() async {
     setState(() => _isLoading = true);
     try {
+      print('Loading products...');
       final products = await DatabaseService.instance.getAvailableProducts();
+      print('Products loaded: count = \'${products.length}\'');
       final categories = products.map((p) => p.category).toSet();
-      
+      print('Categories found: $categories');
       setState(() {
         _products = products;
         _filteredProducts = products;
@@ -45,6 +46,7 @@ class _CustomerViewState extends State<CustomerView> {
         _isLoading = false;
       });
     } catch (e) {
+      print('Error loading products: $e');
       setState(() {
         _isLoading = false;
       });

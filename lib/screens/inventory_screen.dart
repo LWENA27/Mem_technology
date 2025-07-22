@@ -243,7 +243,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Total Products',
                                     style: TextStyle(
                                       color: lightGray,
@@ -265,7 +265,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'In Stock',
                                     style: TextStyle(
                                       color: lightGray,
@@ -287,7 +287,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Out of Stock',
                                     style: TextStyle(
                                       color: lightGray,
@@ -369,7 +369,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     const SizedBox(height: 4),
                                     Text(
                                       '${product.category} • ${product.brand}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: lightGray,
                                         fontSize: 12,
                                       ),

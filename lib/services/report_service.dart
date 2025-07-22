@@ -46,8 +46,8 @@ class ReportService {
               headers: [
                 'Product Name',
                 'Quantity',
-                'Unit Price',
-                'Total Price',
+                'Unit Price (TSH)',
+                'Total Price (TSH)',
                 'Customer Name',
                 'Sale Date',
               ],
@@ -55,8 +55,8 @@ class ReportService {
                   .map((sale) => [
                         sale.productName,
                         sale.quantity.toString(),
-                        '\$${sale.unitPrice.toStringAsFixed(2)}',
-                        '\$${sale.totalPrice.toStringAsFixed(2)}',
+                        'TSH ${sale.unitPrice.toStringAsFixed(2)}',
+                        'TSH ${sale.totalPrice.toStringAsFixed(2)}',
                         sale.customerName,
                         DateFormat('MMM dd, yyyy').format(sale.saleDate),
                       ])
@@ -72,7 +72,7 @@ class ReportService {
             pw.Container(
               alignment: pw.Alignment.centerRight,
               child: pw.Text(
-                'Total Sales: \$${totalSales.toStringAsFixed(2)}',
+                'Total Sales: TSH ${totalSales.toStringAsFixed(2)}',
                 style:
                     pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
               ),
