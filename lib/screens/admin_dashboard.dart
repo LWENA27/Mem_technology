@@ -6,6 +6,7 @@ import 'package:memtechnology/widgets/add_product_dialog.dart';
 import 'package:memtechnology/screens/inventory_screen.dart';
 import 'sales_screen.dart';
 import 'reports_screen.dart';
+import 'admin_account_screen.dart';
 import 'login_screen.dart' as login;
 
 class AdminDashboard extends StatefulWidget {
@@ -25,6 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     const InventoryScreen(),
     const SalesScreen(),
     const ReportsScreen(),
+    const AdminAccountScreen(),
   ];
 
   // MEM Technology Color Scheme
@@ -113,6 +115,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         unselectedItemColor: lightGray,
         selectedLabelStyle: const TextStyle(color: primaryGreen),
         unselectedLabelStyle: const TextStyle(color: lightGray),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.inventory),
@@ -126,6 +129,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
             icon: Icon(Icons.assessment),
             label: 'Reports',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
         ],
       ),
       floatingActionButton: _currentIndex == 0 // Show only on Inventory screen
@@ -134,7 +141,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               backgroundColor: primaryGreen,
               foregroundColor: Colors.white,
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               child: const Icon(Icons.add),
             )
           : null,
