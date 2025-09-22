@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 import '../services/report_service.dart';
 import '../services/DatabaseService.dart';
 import '../models/product.dart';
@@ -23,7 +24,7 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  DateTime _startDate = DateTime(2020, 1, 1); // Start from early date to include all sales
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   bool _isLoading = false;
   Map<String, dynamic>? _reportData;
@@ -47,12 +48,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
         foregroundColor: Colors.white,
         elevation: 2,
         shadowColor: primaryGreen.withOpacity(0.3),
-        automaticallyImplyLeading: false, // Remove automatic back button
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -571,41 +566,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       print(
           'Loading sales data for period: ${_startDate.toIso8601String()} to ${_endDate.toIso8601String()}');
 
-      // First try to fetch sales in the specified date range
-      List<Sale> sales = await DatabaseService.instance
+      // Fetch sales data
+      final sales = await DatabaseService.instance
           .getSalesByDateRange(_startDate, _endDate);
-      print('Fetched ${sales.length} sales records in date range');
-
-      // If no sales found in date range, fetch all sales and filter
-      if (sales.isEmpty) {
-        print('No sales found in date range. Fetching all sales...');
-        final allSales = await DatabaseService.instance.getAllSales();
-        print('Total sales in database: ${allSales.length}');
-        
-        if (allSales.isNotEmpty) {
-          print('Sample sale dates:');
-          for (int i = 0; i < allSales.length && i < 5; i++) {
-            print('  Sale ${i + 1}: ${allSales[i].saleDate}');
-          }
-          
-          // Filter sales manually to see if date comparison is the issue
-          sales = allSales.where((sale) {
-            return sale.saleDate.isAfter(_startDate.subtract(const Duration(days: 1))) &&
-                   sale.saleDate.isBefore(_endDate.add(const Duration(days: 1)));
-          }).toList();
-          print('Manually filtered sales: ${sales.length}');
-          
-          // If still no sales, just use all sales for now
-          if (sales.isEmpty && allSales.isNotEmpty) {
-            print('Using all sales as fallback');
-            sales = allSales;
-            // Update date range to encompass all sales
-            final dates = sales.map((s) => s.saleDate).toList()..sort();
-            _startDate = dates.first;
-            _endDate = dates.last;
-          }
-        }
-      }
+      print('Fetched ${sales.length} sales records');
 
       // Fetch all products for profit/loss calculation
       final products = await DatabaseService.instance.getAllProducts();
@@ -662,7 +626,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         _isLoading = false;
       });
 
-      print('Report data loaded successfully with ${sales.length} sales');
+      print('Report data loaded successfully');
     } catch (e) {
       print('Error loading report data: $e');
       setState(() {
@@ -710,7 +674,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     try {
       final reportService = ReportService();
-      await reportService.generateSalesReport(_startDate, _endDate);
+      final pdf = await reportService.generateSalesReport(_startDate, _endDate);
 
       if (kIsWeb) {
         // For web, trigger download

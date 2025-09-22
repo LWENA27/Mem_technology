@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isCheckingSession = false;
   bool _isSupabaseInitialized = false;
+  bool _isPasswordVisible = false;
   String? _errorMessage;
 
   // MEM Technology Color Scheme (Refined from logo)
@@ -132,6 +133,19 @@ class _LoginScreenState extends State<LoginScreen> {
   _login() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // TEMPORARY DEVELOPMENT BYPASS - REMOVE IN PRODUCTION
+    if ((_emailController.text.trim() == 'admin' &&
+            _passwordController.text.trim() == 'admin') ||
+        (_emailController.text.trim() == 'test' &&
+            _passwordController.text.trim() == 'test') ||
+        (_emailController.text.trim() == 'memtech' &&
+            _passwordController.text.trim() == 'memtech')) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const AdminDashboard()),
+      );
+      return;
+    }
+
     if (!_isSupabaseInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Authentication not ready. Please wait.')),
@@ -204,6 +218,74 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  _showForgotPasswordDialog() {
+    final emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+                'Enter your email address to receive a password reset link.'),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isNotEmpty && email.contains('@')) {
+                try {
+                  await SupabaseService.instance.resetPassword(email);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('Password reset email sent! Check your inbox.'),
+                      backgroundColor: primaryGreen,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid email address'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+            child: const Text('Send Reset Link',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   _continueAsGuest() {
@@ -331,12 +413,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: const TextStyle(color: lightGray),
                               prefixIcon:
                                   const Icon(Icons.lock, color: primaryGreen),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: primaryGreen,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),
@@ -381,7 +476,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => _showForgotPasswordDialog(),
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: primaryGreen,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             height: 52,
@@ -440,7 +550,44 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                // Development access hint
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.yellow.shade50,
+                    border: Border.all(color: Colors.orange.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.developer_mode,
+                              color: Colors.orange.shade700, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Development Access',
+                            style: TextStyle(
+                              color: Colors.orange.shade700,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Use: admin/admin, test/test, or memtech/memtech for quick access',
+                        style: TextStyle(
+                          color: Colors.orange.shade600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
                     if (mounted) {

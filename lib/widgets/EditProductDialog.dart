@@ -1,8 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 
 class EditProductDialog extends StatefulWidget {
   final Product product;

@@ -72,7 +72,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      '\$${totalSales.toStringAsFixed(2)}',
+                      'TSH ${totalSales.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 18,
                         color: Colors.green,
@@ -143,7 +143,7 @@ class _SalesScreenState extends State<SalesScreen> {
                                   children: [
                                     Text('Customer: ${sale.customerName}'),
                                     Text(
-                                        'Qty: ${sale.quantity} × \$${sale.unitPrice.toStringAsFixed(2)}'),
+                                        'Qty: ${sale.quantity} × TSH ${sale.unitPrice.toStringAsFixed(2)}'),
                                     Text(
                                       DateFormat('MMM dd, yyyy HH:mm')
                                           .format(sale.saleDate),
@@ -153,7 +153,7 @@ class _SalesScreenState extends State<SalesScreen> {
                                   ],
                                 ),
                                 trailing: Text(
-                                  '\$${sale.totalPrice.toStringAsFixed(2)}',
+                                  'TSH ${sale.totalPrice.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

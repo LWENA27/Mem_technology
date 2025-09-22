@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 import '../services/report_service.dart';
 import '../services/DatabaseService.dart';
 import '../models/product.dart';
@@ -14,6 +15,7 @@ const Color lightGray = Color(0xFF757575);
 const Color backgroundColor = Color(0xFFF8F9FA);
 const Color cardBackground = Colors.white;
 const Color errorColor = Color(0xFFE57373);
+const Color warningColor = Color(0xFFFFB74D);
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -23,7 +25,7 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  DateTime _startDate = DateTime(2020, 1, 1); // Start from early date to include all sales
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   bool _isLoading = false;
   Map<String, dynamic>? _reportData;
@@ -41,18 +43,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Sales Reports',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Sales Reports', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         elevation: 2,
         shadowColor: primaryGreen.withOpacity(0.3),
-        automaticallyImplyLeading: false, // Remove automatic back button
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -82,8 +77,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           children: [
             CircularProgressIndicator(color: primaryGreen, strokeWidth: 3),
             SizedBox(height: 16),
-            Text('Loading report data...',
-                style: TextStyle(color: darkGray, fontSize: 16)),
+            Text('Loading report data...', style: TextStyle(color: darkGray, fontSize: 16)),
           ],
         ),
       );
@@ -98,8 +92,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             const SizedBox(height: 16),
             Text(
               'Failed to load data',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
             ),
             const SizedBox(height: 8),
             Padding(
@@ -117,10 +110,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               label: const Text('Retry', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryGreen,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ],
@@ -137,8 +128,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             const SizedBox(height: 16),
             Text(
               'No sales data found',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
             ),
             const SizedBox(height: 8),
             Text(
@@ -149,14 +139,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ElevatedButton.icon(
               onPressed: _selectDateRange,
               icon: const Icon(Icons.date_range, color: Colors.white),
-              label: const Text('Change Period',
-                  style: TextStyle(color: Colors.white)),
+              label: const Text('Change Period', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryGreen,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ],
@@ -206,8 +193,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               const SizedBox(width: 8),
               Text(
                 'Report Period',
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold, color: darkGray),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkGray),
               ),
             ],
           ),
@@ -217,21 +203,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  '${DateFormat('MMM dd, yyyy').format(_startDate)} - ${DateFormat('MMM dd, yyyy').format(_endDate)}',
+                  '\${DateFormat('MMM dd, yyyy').format(_startDate)} - \${DateFormat('MMM dd, yyyy').format(_endDate)}',
                   style: TextStyle(color: darkGray, fontSize: 16),
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: _selectDateRange,
                 icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-                label:
-                    const Text('Change', style: TextStyle(color: Colors.white)),
+                label: const Text('Change', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryGreen,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
@@ -249,7 +232,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Total Sales',
-                'TSH ${NumberFormat('#,##0.00').format(_reportData!['totalSales'])}',
+                'TSH \${NumberFormat('#,##0.00').format(_reportData!['totalSales'])}',
                 Icons.monetization_on,
                 primaryGreen,
               ),
@@ -258,7 +241,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Transactions',
-                '${_reportData!['totalTransactions']}',
+                '\${_reportData!['totalTransactions']}',
                 Icons.receipt_long,
                 darkGreen,
               ),
@@ -271,7 +254,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Total Items Sold',
-                '${NumberFormat('#,##0').format(_reportData!['totalItems'])}',
+                '\${NumberFormat('#,##0').format(_reportData!['totalItems'])}',
                 Icons.shopping_cart,
                 const Color(0xFF2196F3),
               ),
@@ -280,7 +263,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Average Sale',
-                'TSH ${NumberFormat('#,##0.00').format(_reportData!['averageSale'])}',
+                'TSH \${NumberFormat('#,##0.00').format(_reportData!['averageSale'])}',
                 Icons.bar_chart,
                 const Color(0xFF9C27B0),
               ),
@@ -291,8 +274,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _buildSummaryCard(
-      String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -349,7 +331,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _buildTopProducts() {
     final topProducts = _reportData!['topProducts'] as List;
-
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -373,8 +355,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               const SizedBox(width: 8),
               Text(
                 'Top Products',
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold, color: darkGray),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkGray),
               ),
             ],
           ),
@@ -383,64 +364,56 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Text('No product data available',
-                    style: TextStyle(color: lightGray)),
+                child: Text('No product data available', style: TextStyle(color: lightGray)),
               ),
             )
           else
-            ...topProducts
-                .map<Widget>((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: primaryGreen,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  entry.key,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: darkGray),
-                                ),
-                                Text(
-                                  'Quantity sold: ${entry.value}',
-                                  style:
-                                      TextStyle(fontSize: 12, color: lightGray),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${entry.value}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: primaryGreen,
-                              ),
-                            ),
-                          ),
-                        ],
+            ...topProducts.map<Widget>((entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: primaryGreen,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.key,
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: darkGray),
+                        ),
+                        Text(
+                          'Quantity sold: \${entry.value}',
+                          style: TextStyle(fontSize: 12, color: lightGray),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '\${entry.value}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: primaryGreen,
                       ),
-                    ))
-                .toList(),
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
         ],
       ),
     );
@@ -448,7 +421,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _buildRecentSales() {
     final recentSales = _reportData!['recentSales'] as List;
-
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -475,18 +448,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Recent Sales',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: darkGray),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkGray),
                   ),
                 ],
               ),
               if (recentSales.isNotEmpty)
                 TextButton(
                   onPressed: _showAllSales,
-                  child:
-                      Text('View All', style: TextStyle(color: primaryGreen)),
+                  child: Text('View All', style: TextStyle(color: primaryGreen)),
                 ),
             ],
           ),
@@ -495,67 +464,54 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Text('No sales data available',
-                    style: TextStyle(color: lightGray)),
+                child: Text('No sales data available', style: TextStyle(color: lightGray)),
               ),
             )
           else
-            ...recentSales
-                .map<Widget>((sale) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.shopping_bag,
-                                color: primaryGreen, size: 16),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  sale.productName,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: darkGray),
-                                ),
-                                Text(
-                                  '${sale.customerName} • Qty: ${sale.quantity}',
-                                  style:
-                                      TextStyle(fontSize: 12, color: lightGray),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryGreen),
-                              ),
-                              Text(
-                                DateFormat('MMM dd, HH:mm')
-                                    .format(sale.saleDate),
-                                style:
-                                    TextStyle(fontSize: 11, color: lightGray),
-                              ),
-                            ],
-                          ),
-                        ],
+            ...recentSales.map<Widget>((sale) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.shopping_bag, color: primaryGreen, size: 16),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sale.productName,
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: darkGray),
+                        ),
+                        Text(
+                          '\${sale.customerName} • Qty: \${sale.quantity}',
+                          style: TextStyle(fontSize: 12, color: lightGray),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'TSH \${NumberFormat('#,##0.00').format(sale.totalPrice)}',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryGreen),
                       ),
-                    ))
-                .toList(),
+                      Text(
+                        DateFormat('MMM dd, HH:mm').format(sale.saleDate),
+                        style: TextStyle(fontSize: 11, color: lightGray),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )).toList(),
         ],
       ),
     );
@@ -568,69 +524,34 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
 
     try {
-      print(
-          'Loading sales data for period: ${_startDate.toIso8601String()} to ${_endDate.toIso8601String()}');
-
-      // First try to fetch sales in the specified date range
-      List<Sale> sales = await DatabaseService.instance
-          .getSalesByDateRange(_startDate, _endDate);
-      print('Fetched ${sales.length} sales records in date range');
-
-      // If no sales found in date range, fetch all sales and filter
-      if (sales.isEmpty) {
-        print('No sales found in date range. Fetching all sales...');
-        final allSales = await DatabaseService.instance.getAllSales();
-        print('Total sales in database: ${allSales.length}');
-        
-        if (allSales.isNotEmpty) {
-          print('Sample sale dates:');
-          for (int i = 0; i < allSales.length && i < 5; i++) {
-            print('  Sale ${i + 1}: ${allSales[i].saleDate}');
-          }
-          
-          // Filter sales manually to see if date comparison is the issue
-          sales = allSales.where((sale) {
-            return sale.saleDate.isAfter(_startDate.subtract(const Duration(days: 1))) &&
-                   sale.saleDate.isBefore(_endDate.add(const Duration(days: 1)));
-          }).toList();
-          print('Manually filtered sales: ${sales.length}');
-          
-          // If still no sales, just use all sales for now
-          if (sales.isEmpty && allSales.isNotEmpty) {
-            print('Using all sales as fallback');
-            sales = allSales;
-            // Update date range to encompass all sales
-            final dates = sales.map((s) => s.saleDate).toList()..sort();
-            _startDate = dates.first;
-            _endDate = dates.last;
-          }
-        }
-      }
-
+      print('Loading sales data for period: \${_startDate.toIso8601String()} to \${_endDate.toIso8601String()}');
+      
+      // Fetch sales data
+      final sales = await DatabaseService.instance.getSalesByDateRange(_startDate, _endDate);
+      print('Fetched \${sales.length} sales records');
+      
       // Fetch all products for profit/loss calculation
       final products = await DatabaseService.instance.getAllProducts();
-      print('Fetched ${products.length} products');
+      print('Fetched \${products.length} products');
 
       // Calculate metrics
-      final totalSales =
-          sales.fold<double>(0, (sum, sale) => sum + sale.totalPrice);
+      final totalSales = sales.fold<double>(0, (sum, sale) => sum + sale.totalPrice);
       final totalItems = sales.fold<int>(0, (sum, sale) => sum + sale.quantity);
-
+      
       // Calculate product sales quantities
       final productSales = <String, int>{};
       double profit = 0.0;
       double loss = 0.0;
 
       for (final sale in sales) {
-        productSales[sale.productName] =
-            (productSales[sale.productName] ?? 0) + sale.quantity;
-
+        productSales[sale.productName] = (productSales[sale.productName] ?? 0) + sale.quantity;
+        
         // Find matching product for profit calculation
         final product = products.cast<Product?>().firstWhere(
-              (p) => p?.id == sale.productId,
-              orElse: () => null,
-            );
-
+          (p) => p?.id == sale.productId,
+          orElse: () => null,
+        );
+        
         if (product != null) {
           final cost = product.buyingPrice * sale.quantity;
           final saleProfit = sale.totalPrice - cost;
@@ -662,11 +583,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
         _isLoading = false;
       });
 
-      print('Report data loaded successfully with ${sales.length} sales');
+      print('Report data loaded successfully');
     } catch (e) {
-      print('Error loading report data: $e');
+      print('Error loading report data: \$e');
       setState(() {
-        _errorMessage = 'Failed to load report data: $e';
+        _errorMessage = 'Failed to load report data: \$e';
         _reportData = null;
         _isLoading = false;
       });
@@ -683,8 +604,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: primaryGreen,
-                ),
+              primary: primaryGreen,
+            ),
           ),
           child: child!,
         );
@@ -707,23 +628,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
 
     setState(() => _isLoading = true);
-
+    
     try {
       final reportService = ReportService();
-      await reportService.generateSalesReport(_startDate, _endDate);
-
+      final pdf = await reportService.generateSalesReport(_startDate, _endDate);
+      
       if (kIsWeb) {
         // For web, trigger download
         _showMessage('Report generated successfully');
       } else {
         // For mobile/desktop, save to downloads
-        final fileName =
-            'sales_report_${DateFormat('yyyy_MM_dd').format(_startDate)}_to_${DateFormat('yyyy_MM_dd').format(_endDate)}.pdf';
+        final fileName = 'sales_report_\${DateFormat('yyyy_MM_dd').format(_startDate)}_to_\${DateFormat('yyyy_MM_dd').format(_endDate)}.pdf';
         // Implementation depends on platform-specific file handling
-        _showMessage('Report saved as $fileName');
+        _showMessage('Report saved as \$fileName');
       }
     } catch (e) {
-      _showMessage('Failed to generate report: $e');
+      _showMessage('Failed to generate report: \$e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -743,11 +663,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'All Sales (${_allSales.length})',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: darkGray),
+                    'All Sales (\${_allSales.length})',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -764,21 +681,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: primaryGreen.withOpacity(0.1),
-                        child: Icon(Icons.shopping_bag,
-                            color: primaryGreen, size: 16),
+                        child: Icon(Icons.shopping_bag, color: primaryGreen, size: 16),
                       ),
                       title: Text(sale.productName),
-                      subtitle:
-                          Text('${sale.customerName} • Qty: ${sale.quantity}'),
+                      subtitle: Text('\${sale.customerName} • Qty: \${sale.quantity}'),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: primaryGreen),
+                            'TSH \${NumberFormat('#,##0.00').format(sale.totalPrice)}',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: primaryGreen),
                           ),
                           Text(
                             DateFormat('MMM dd, HH:mm').format(sale.saleDate),

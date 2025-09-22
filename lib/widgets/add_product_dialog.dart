@@ -1,8 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 
 class AddProductDialog extends StatefulWidget {
   final Product? product; // For editing existing products
@@ -136,7 +137,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         imageQuality: 85,
       );
 
-      if (pickedFile != null) {
+      if (pickedFile != null && !kIsWeb) {
         setState(() {
           _selectedImage = File(pickedFile.path);
           _currentImageUrl =
@@ -242,7 +243,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Widget _buildImagePreview() {
-    if (_selectedImage != null) {
+    if (_selectedImage != null && !kIsWeb) {
       return Container(
         height: 200,
         width: double.infinity,
@@ -318,7 +319,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: File(_currentImageUrl!).existsSync()
+            child: (!kIsWeb && File(_currentImageUrl!).existsSync())
                 ? Image.file(
                     File(_currentImageUrl!),
                     fit: BoxFit.cover,

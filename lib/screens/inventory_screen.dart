@@ -316,7 +316,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           itemBuilder: (context, index) {
                             final product = _products[index];
                             final isOutOfStock = product.quantity == 0;
-                            
+
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12),
                               elevation: 2,
@@ -329,21 +329,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   width: 60,
                                   height: 60,
                                   decoration: BoxDecoration(
-                                    color: isOutOfStock 
+                                    color: isOutOfStock
                                         ? Colors.red.withOpacity(0.1)
                                         : primaryGreen.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: product.imageUrl != null
                                       ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           child: Image.network(
                                             product.imageUrl!,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
                                               return Icon(
                                                 Icons.shopping_bag,
-                                                color: isOutOfStock ? Colors.red : primaryGreen,
+                                                color: isOutOfStock
+                                                    ? Colors.red
+                                                    : primaryGreen,
                                                 size: 30,
                                               );
                                             },
@@ -351,7 +355,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         )
                                       : Icon(
                                           Icons.shopping_bag,
-                                          color: isOutOfStock ? Colors.red : primaryGreen,
+                                          color: isOutOfStock
+                                              ? Colors.red
+                                              : primaryGreen,
                                           size: 30,
                                         ),
                                 ),
@@ -378,7 +384,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     Row(
                                       children: [
                                         Text(
-                                          'Price: \$${product.sellingPrice.toStringAsFixed(2)}',
+                                          'Price: TSH ${product.sellingPrice.toStringAsFixed(2)}',
                                           style: const TextStyle(
                                             color: primaryGreen,
                                             fontWeight: FontWeight.w600,
@@ -395,12 +401,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             color: isOutOfStock
                                                 ? Colors.red.withOpacity(0.1)
                                                 : primaryGreen.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
                                           ),
                                           child: Text(
                                             '${product.quantity} units',
                                             style: TextStyle(
-                                              color: isOutOfStock ? Colors.red : primaryGreen,
+                                              color: isOutOfStock
+                                                  ? Colors.red
+                                                  : primaryGreen,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -411,12 +420,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   ],
                                 ),
                                 trailing: PopupMenuButton(
-                                  icon: const Icon(Icons.more_vert, color: lightGray),
+                                  icon: const Icon(Icons.more_vert,
+                                      color: lightGray),
                                   itemBuilder: (context) => [
                                     PopupMenuItem(
                                       child: const Row(
                                         children: [
-                                          Icon(Icons.edit, color: primaryGreen, size: 20),
+                                          Icon(Icons.edit,
+                                              color: primaryGreen, size: 20),
                                           SizedBox(width: 8),
                                           Text('Edit'),
                                         ],
@@ -429,7 +440,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     PopupMenuItem(
                                       child: const Row(
                                         children: [
-                                          Icon(Icons.delete, color: Colors.red, size: 20),
+                                          Icon(Icons.delete,
+                                              color: Colors.red, size: 20),
                                           SizedBox(width: 8),
                                           Text('Delete'),
                                         ],

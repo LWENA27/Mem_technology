@@ -62,9 +62,12 @@ class _CustomerViewState extends State<CustomerView> {
   _filterProducts() {
     setState(() {
       _filteredProducts = _products.where((product) {
-        final matchesSearch = product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                             product.brand.toLowerCase().contains(_searchQuery.toLowerCase());
-        final matchesCategory = _selectedCategory == 'All' || product.category == _selectedCategory;
+        final matchesSearch = product.name
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            product.brand.toLowerCase().contains(_searchQuery.toLowerCase());
+        final matchesCategory =
+            _selectedCategory == 'All' || product.category == _selectedCategory;
         return matchesSearch && matchesCategory;
       }).toList();
     });
@@ -87,7 +90,8 @@ class _CustomerViewState extends State<CustomerView> {
   _sendWhatsAppMessage() async {
     const phoneNumber = '+255745263981';
     const message = 'Hello! Im interested in your products. Can you assist me?';
-    final url = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
+    final url =
+        'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url));
     } else {
@@ -210,7 +214,8 @@ class _CustomerViewState extends State<CustomerView> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryGreen, width: 2),
+                      borderSide:
+                          const BorderSide(color: primaryGreen, width: 2),
                     ),
                     filled: true,
                     fillColor: backgroundColor,
@@ -233,7 +238,9 @@ class _CustomerViewState extends State<CustomerView> {
                             category,
                             style: TextStyle(
                               color: isSelected ? Colors.white : darkGray,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           selected: isSelected,
@@ -288,7 +295,8 @@ class _CustomerViewState extends State<CustomerView> {
                         onRefresh: () async => _loadProducts(),
                         child: GridView.builder(
                           padding: const EdgeInsets.all(12),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             childAspectRatio: 0.7,
                             crossAxisSpacing: 12,
@@ -302,7 +310,8 @@ class _CustomerViewState extends State<CustomerView> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ProductDetailScreen(product: product),
+                                    builder: (context) =>
+                                        ProductDetailScreen(product: product),
                                   ),
                                 );
                               },
@@ -324,7 +333,8 @@ class _CustomerViewState extends State<CustomerView> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(12),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               product.name,
@@ -338,14 +348,18 @@ class _CustomerViewState extends State<CustomerView> {
                                             ),
                                             Text(
                                               product.brand,
-                                              style: const TextStyle(color: lightGray, fontSize: 12),
+                                              style: const TextStyle(
+                                                  color: lightGray,
+                                                  fontSize: 12),
                                             ),
                                             const Spacer(),
                                             Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
                                                 Text(
-                                                  '\$${product.sellingPrice.toStringAsFixed(2)}',
+                                                  'TSH ${product.sellingPrice.toStringAsFixed(2)}',
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     color: primaryGreen,
@@ -353,15 +367,20 @@ class _CustomerViewState extends State<CustomerView> {
                                                   ),
                                                 ),
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
                                                     horizontal: 8,
                                                     vertical: 4,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    color: primaryGreen.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(12),
+                                                    color: primaryGreen
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
                                                     border: Border.all(
-                                                      color: primaryGreen.withOpacity(0.3),
+                                                      color: primaryGreen
+                                                          .withOpacity(0.3),
                                                     ),
                                                   ),
                                                   child: Text(
@@ -369,7 +388,8 @@ class _CustomerViewState extends State<CustomerView> {
                                                     style: const TextStyle(
                                                       fontSize: 10,
                                                       color: primaryGreen,
-                                                      fontWeight: FontWeight.w600,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
                                                   ),
                                                 ),
@@ -455,7 +475,8 @@ class ProductDetailScreen extends StatelessWidget {
                       child: const Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(primaryGreen),
                         ),
                       ),
                     );
@@ -464,7 +485,8 @@ class ProductDetailScreen extends StatelessWidget {
                     print('Image load error for ${product.imageUrl}: $error');
                     return Container(
                       color: Colors.white,
-                      child: const Icon(Icons.broken_image, size: 80, color: lightGray),
+                      child: const Icon(Icons.broken_image,
+                          size: 80, color: lightGray),
                     );
                   },
                 ),
@@ -509,13 +531,14 @@ class ProductDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: primaryGreen,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '\$${product.sellingPrice.toStringAsFixed(2)}',
+                          'TSH ${product.sellingPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 18,
                             color: Colors.white,
@@ -525,11 +548,13 @@ class ProductDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: primaryGreen.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: primaryGreen.withOpacity(0.3)),
+                          border:
+                              Border.all(color: primaryGreen.withOpacity(0.3)),
                         ),
                         child: Text(
                           '${product.quantity} in stock',
