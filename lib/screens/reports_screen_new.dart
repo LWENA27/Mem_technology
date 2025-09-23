@@ -46,7 +46,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         elevation: 2,
-        shadowColor: primaryGreen.withOpacity(0.3),
+  shadowColor: primaryGreen.withAlpha((0.3 * 255).round()),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -176,7 +176,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -240,7 +240,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
                 child: _buildSummaryCard(
                 'Transactions',
-                "${_reportData!['totalTransactions']}",
+                _reportData!['totalTransactions'].toString(),
                 Icons.receipt_long,
                 darkGreen,
               ),
@@ -253,7 +253,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
                 child: _buildSummaryCard(
                 'Total Items Sold',
-                "${NumberFormat('#,##0').format(_reportData!['totalItems'])}",
+                NumberFormat('#,##0').format(_reportData!['totalItems']),
                 Icons.shopping_cart,
                 const Color(0xFF2196F3),
               ),
@@ -281,7 +281,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -296,7 +296,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withAlpha((0.1 * 255).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -338,7 +338,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -398,7 +398,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: primaryGreen.withOpacity(0.1),
+                      color: primaryGreen.withAlpha((0.1 * 255).round()),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -428,7 +428,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -474,7 +474,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: primaryGreen.withOpacity(0.1),
+                      color: primaryGreen.withAlpha((0.1 * 255).round()),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.shopping_bag, color: primaryGreen, size: 16),
@@ -679,7 +679,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     final sale = _allSales[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: primaryGreen.withOpacity(0.1),
+                        backgroundColor: primaryGreen.withAlpha((0.1 * 255).round()),
                         child: const Icon(Icons.shopping_bag, color: primaryGreen, size: 16),
                       ),
                       title: Text(sale.productName),
