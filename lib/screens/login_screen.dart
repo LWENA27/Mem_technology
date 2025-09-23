@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Check login status after initialization
       _checkLoginStatus();
     } catch (e) {
-      print('Error initializing Supabase: $e');
+      debugPrint('Error initializing Supabase: $e');
       setState(() {
         _errorMessage = 'Failed to initialize authentication: $e';
         _isCheckingSession = false;
@@ -63,15 +63,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      print('Starting login status check...');
+      debugPrint('Starting login status check...');
 
       final supabase = SupabaseService.instance.client;
       final session = supabase.auth.currentSession;
 
-      print('Session exists: ${session != null}');
+      debugPrint('Session exists: ${session != null}');
 
       if (session != null && mounted) {
-        print('Checking user role for ID: ${session.user.id}');
+        debugPrint('Checking user role for ID: ${session.user.id}');
 
         // Add timeout to prevent hanging
         final userData = await supabase
@@ -82,37 +82,37 @@ class _LoginScreenState extends State<LoginScreen> {
             .timeout(
           const Duration(seconds: 10),
           onTimeout: () {
-            print('Database query timed out');
+            debugPrint('Database query timed out');
             return null;
           },
         );
 
-        print('User data retrieved: $userData');
+        debugPrint('User data retrieved: $userData');
 
         if (userData != null && mounted) {
           final role = userData['role'];
-          print('User role: $role');
+          debugPrint('User role: $role');
 
           if (role == 'admin') {
-            print('Navigating to Admin Dashboard');
+            debugPrint('Navigating to Admin Dashboard');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
           } else {
-            print('Navigating to Customer View');
+            debugPrint('Navigating to Customer View');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const CustomerView()),
             );
           }
         } else if (mounted) {
-          print('No user data found');
+          debugPrint('No user data found');
           setState(() {
             _errorMessage = 'No role assigned. Please contact support.';
             _isCheckingSession = false;
           });
         }
       } else {
-        print('No active session found');
+        debugPrint('No active session found');
         if (mounted) {
           setState(() {
             _isCheckingSession = false;
@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
-      print('Error during login status check: $e');
+      debugPrint('Error during login status check: $e');
       if (mounted) {
         setState(() {
           _errorMessage = 'Connection error. Please try again.';
@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      print('Starting login process...');
+      debugPrint('Starting login process...');
 
       final response = await SupabaseService.instance
           .signInWithPassword(
@@ -174,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
-      print('Login successful for user: ${response.user?.id}');
+      debugPrint('Login successful for user: ${response.user?.id}');
 
       if (mounted && response.user != null) {
         final supabase = SupabaseService.instance.client;
@@ -192,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (userData != null && mounted) {
           final role = userData['role'];
-          print('Login: User role is $role');
+          debugPrint('Login: User role is $role');
 
           if (role == 'admin') {
             Navigator.of(context).pushReplacement(
@@ -209,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
       if (mounted) {
         setState(() => _errorMessage = 'Login failed: ${e.toString()}');
       }
@@ -300,12 +300,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     // Show loading screen while checking session
     if (_isCheckingSession || !_isSupabaseInitialized) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: backgroundColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               CircularProgressIndicator(
                 color: primaryGreen,
                 strokeWidth: 3,
@@ -481,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () => _showForgotPasswordDialog(),
-                              child: Text(
+                              child: const Text(
                                 'Forgot Password?',
                                 style: TextStyle(
                                   color: primaryGreen,
@@ -649,7 +649,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      print('Starting registration process...');
+      debugPrint('Starting registration process...');
 
       // Sign up user with timeout
       final response = await SupabaseService.instance.signUp(
@@ -667,7 +667,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (response.user != null && mounted) {
-        print('User created: ${response.user!.id}');
+        debugPrint('User created: ${response.user!.id}');
 
         // Insert user profile with timeout
         final supabase = SupabaseService.instance.client;
@@ -683,7 +683,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         );
 
-        print('Profile created successfully');
+        debugPrint('Profile created successfully');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -711,7 +711,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     } catch (e) {
-      print('Registration error: $e');
+      debugPrint('Registration error: $e');
       if (mounted) {
         setState(() => _errorMessage = 'Registration failed: ${e.toString()}');
       }

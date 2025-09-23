@@ -71,7 +71,7 @@ class DatabaseService {
       await SupabaseService.instance.initialize();
       return SupabaseService.instance.client;
     } catch (e) {
-      print('Supabase not available: $e');
+      debugPrint('Supabase not available: $e');
       return null;
     }
   }
@@ -112,7 +112,7 @@ class DatabaseService {
       await fileAsFile.copy(localPath);
       return localPath;
     } catch (e) {
-      print('Error uploading image: $e');
+      debugPrint('Error uploading image: $e');
       return null;
     }
   }
@@ -134,7 +134,7 @@ class DatabaseService {
         if (await file.exists()) await file.delete();
       }
     } catch (e) {
-      print('Error deleting image: $e');
+      debugPrint('Error deleting image: $e');
     }
   }
 
@@ -160,7 +160,7 @@ class DatabaseService {
       }
       return newImageUrl;
     } catch (e) {
-      print('Error updating product image: $e');
+      debugPrint('Error updating product image: $e');
       return oldImageUrl;
     }
   }
@@ -186,7 +186,7 @@ class DatabaseService {
           }).toList();
         }
       } catch (e) {
-        print('Error fetching from Supabase, falling back to local: $e');
+        debugPrint('Error fetching from Supabase, falling back to local: $e');
       }
     }
 
@@ -218,7 +218,7 @@ class DatabaseService {
           await supabase.from('products').insert(productJson);
         }
       } catch (e) {
-        print('Error syncing to Supabase: $e');
+        debugPrint('Error syncing to Supabase: $e');
       }
     }
   }
@@ -241,7 +241,7 @@ class DatabaseService {
               .eq('id', product.id);
         }
       } catch (e) {
-        print('Error syncing update to Supabase: $e');
+        debugPrint('Error syncing update to Supabase: $e');
       }
     }
   }
@@ -277,7 +277,7 @@ class DatabaseService {
         }
       }
     } catch (e) {
-      print('Error updating product with image: $e');
+      debugPrint('Error updating product with image: $e');
       rethrow;
     }
   }
@@ -294,7 +294,7 @@ class DatabaseService {
             final res = await supabase.from('sales').insert(saleJson);
             // some clients return a response object; if an error appears it will
             // surface as an exception, but log the successful response when present
-            print('Inserted sale to Supabase (web): ${jsonEncode(res)}');
+            debugPrint('Inserted sale to Supabase (web): ${jsonEncode(res)}');
             return;
           }
           throw Exception('Supabase client not available');
@@ -448,7 +448,7 @@ class DatabaseService {
           }
         }
       } catch (e) {
-        print('Error deleting product from Supabase: $e');
+        debugPrint('Error deleting product from Supabase: $e');
       }
     }
   }
@@ -474,9 +474,9 @@ class DatabaseService {
         }
       }
 
-      print('Successfully synced local data with Supabase');
+      debugPrint('Successfully synced local data with Supabase');
     } catch (e) {
-      print('Error syncing with Supabase: $e');
+      debugPrint('Error syncing with Supabase: $e');
     }
   }
 
@@ -504,9 +504,9 @@ class DatabaseService {
   void _logSupabaseError(String context, dynamic error) {
     try {
       final details = _extractSupabaseError(error);
-      print('Supabase error [$context]: $details');
+      debugPrint('Supabase error [$context]: $details');
     } catch (e) {
-      print('Supabase error [$context]: $error');
+      debugPrint('Supabase error [$context]: $error');
     }
   }
 

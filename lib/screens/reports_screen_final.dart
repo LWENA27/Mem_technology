@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
 import '../services/report_service.dart';
 import '../services/DatabaseService.dart';
 import '../models/product.dart';
@@ -89,9 +88,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: errorColor),
+            const Icon(Icons.error_outline, size: 64, color: errorColor),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Failed to load data',
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
@@ -102,7 +101,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               child: Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: lightGray),
+                style: const TextStyle(color: lightGray),
               ),
             ),
             const SizedBox(height: 24),
@@ -128,15 +127,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assessment_outlined, size: 64, color: lightGray),
+            const Icon(Icons.assessment_outlined, size: 64, color: lightGray),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No sales data found',
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'for the selected period',
               style: TextStyle(color: lightGray),
             ),
@@ -195,10 +194,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.calendar_today, color: primaryGreen, size: 20),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'Report Period',
                 style: TextStyle(
@@ -213,7 +212,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Text(
                   '${DateFormat('MMM dd, yyyy').format(_startDate)} - ${DateFormat('MMM dd, yyyy').format(_endDate)}',
-                  style: TextStyle(color: darkGray, fontSize: 16),
+                  style: const TextStyle(color: darkGray, fontSize: 16),
                 ),
               ),
               ElevatedButton.icon(
@@ -266,7 +265,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Total Items Sold',
-                '${NumberFormat('#,##0').format(_reportData!['totalItems'])}',
+                NumberFormat('#,##0').format(_reportData!['totalItems']),
                 Icons.shopping_cart,
                 const Color(0xFF2196F3),
               ),
@@ -319,7 +318,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     color: lightGray,
                     fontWeight: FontWeight.w500,
@@ -362,10 +361,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.trending_up, color: primaryGreen, size: 20),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'Top Products',
                 style: TextStyle(
@@ -375,9 +374,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
           const SizedBox(height: 16),
           if (topProducts.isEmpty)
-            Center(
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
+                padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text('No product data available',
                     style: TextStyle(color: lightGray)),
               ),
@@ -403,7 +402,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                               children: [
                                 Text(
                                   entry.key,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: darkGray),
@@ -411,7 +410,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 Text(
                                   'Quantity sold: ${entry.value}',
                                   style:
-                                      TextStyle(fontSize: 12, color: lightGray),
+                                      const TextStyle(fontSize: 12, color: lightGray),
                                 ),
                               ],
                             ),
@@ -425,7 +424,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             ),
                             child: Text(
                               '${entry.value}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: primaryGreen,
@@ -435,7 +434,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ],
                       ),
                     ))
-                .toList(),
+                ,
         ],
       ),
     );
@@ -464,10 +463,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.receipt, color: primaryGreen, size: 20),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Recent Sales',
                     style: TextStyle(
@@ -481,15 +480,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 TextButton(
                   onPressed: _showAllSales,
                   child:
-                      Text('View All', style: TextStyle(color: primaryGreen)),
+                      const Text('View All', style: TextStyle(color: primaryGreen)),
                 ),
             ],
           ),
           const SizedBox(height: 16),
           if (recentSales.isEmpty)
-            Center(
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
+                padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text('No sales data available',
                     style: TextStyle(color: lightGray)),
               ),
@@ -506,7 +505,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                               color: primaryGreen.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.shopping_bag,
+                            child: const Icon(Icons.shopping_bag,
                                 color: primaryGreen, size: 16),
                           ),
                           const SizedBox(width: 12),
@@ -516,7 +515,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                               children: [
                                 Text(
                                   sale.productName,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: darkGray),
@@ -524,7 +523,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 Text(
                                   '${sale.customerName} • Qty: ${sale.quantity}',
                                   style:
-                                      TextStyle(fontSize: 12, color: lightGray),
+                                      const TextStyle(fontSize: 12, color: lightGray),
                                 ),
                               ],
                             ),
@@ -534,7 +533,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             children: [
                               Text(
                                 'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: primaryGreen),
@@ -543,14 +542,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 DateFormat('MMM dd, HH:mm')
                                     .format(sale.saleDate),
                                 style:
-                                    TextStyle(fontSize: 11, color: lightGray),
+                                    const TextStyle(fontSize: 11, color: lightGray),
                               ),
                             ],
                           ),
                         ],
                       ),
                     ))
-                .toList(),
+                ,
         ],
       ),
     );
@@ -563,17 +562,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
 
     try {
-      print(
+      debugPrint(
           'Loading sales data for period: ${_startDate.toIso8601String()} to ${_endDate.toIso8601String()}');
 
       // Fetch sales data
       final sales = await DatabaseService.instance
           .getSalesByDateRange(_startDate, _endDate);
-      print('Fetched ${sales.length} sales records');
+      debugPrint('Fetched ${sales.length} sales records');
 
       // Fetch all products for profit/loss calculation
       final products = await DatabaseService.instance.getAllProducts();
-      print('Fetched ${products.length} products');
+      debugPrint('Fetched ${products.length} products');
 
       // Calculate metrics
       final totalSales =
@@ -626,9 +625,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         _isLoading = false;
       });
 
-      print('Report data loaded successfully');
+      debugPrint('Report data loaded successfully');
     } catch (e) {
-      print('Error loading report data: $e');
+      debugPrint('Error loading report data: $e');
       setState(() {
         _errorMessage = 'Failed to load report data: $e';
         _reportData = null;
@@ -708,7 +707,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 children: [
                   Text(
                     'All Sales (${_allSales.length})',
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: darkGray),
@@ -728,7 +727,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: primaryGreen.withOpacity(0.1),
-                        child: Icon(Icons.shopping_bag,
+                        child: const Icon(Icons.shopping_bag,
                             color: primaryGreen, size: 16),
                       ),
                       title: Text(sale.productName),
@@ -740,13 +739,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         children: [
                           Text(
                             'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: primaryGreen),
                           ),
                           Text(
                             DateFormat('MMM dd, HH:mm').format(sale.saleDate),
-                            style: TextStyle(fontSize: 11, color: lightGray),
+                            style: const TextStyle(fontSize: 11, color: lightGray),
                           ),
                         ],
                       ),

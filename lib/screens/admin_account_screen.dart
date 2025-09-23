@@ -432,7 +432,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete User'),
         content:
-            Text('Are you sure you want to delete the ${role} user: $email?'),
+            Text('Are you sure you want to delete the $role user: $email?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -873,7 +873,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'Try adjusting your search terms'
-                  : 'Add your first ${userType} user above',
+                  : 'Add your first $userType user above',
               style: TextStyle(
                 color: Colors.grey.shade500,
                 fontSize: 14,
@@ -1168,10 +1168,12 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           ),
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please enter new email';
-                            if (!value.contains('@'))
+                            }
+                            if (!value.contains('@')) {
                               return 'Please enter valid email';
+                            }
                             return null;
                           },
                         ),
@@ -1221,8 +1223,9 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           onToggleVisibility: () => setState(() =>
                               _isNewPasswordVisible = !_isNewPasswordVisible),
                           validator: (value) {
-                            if (value == null || value.length < 6)
+                            if (value == null || value.length < 6) {
                               return 'Password must be at least 6 characters';
+                            }
                             return null;
                           },
                         ),
@@ -1235,8 +1238,9 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                               _isCurrentPasswordVisible =
                                   !_isCurrentPasswordVisible),
                           validator: (value) {
-                            if (value != _newPasswordController.text)
+                            if (value != _newPasswordController.text) {
                               return 'Passwords do not match';
+                            }
                             return null;
                           },
                         ),

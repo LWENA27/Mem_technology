@@ -35,11 +35,11 @@ class _CustomerViewState extends State<CustomerView> {
   Future<void> _loadProducts() async {
     setState(() => _isLoading = true);
     try {
-      print('Loading products...');
+      debugPrint('Loading products...');
       final products = await DatabaseService.instance.getAvailableProducts();
-      print('Products loaded: count = \'${products.length}\'');
+      debugPrint('Products loaded: count = \'${products.length}\'');
       final categories = products.map((p) => p.category).toSet();
-      print('Categories found: $categories');
+      debugPrint('Categories found: $categories');
       setState(() {
         _products = products;
         _filteredProducts = products;
@@ -47,7 +47,7 @@ class _CustomerViewState extends State<CustomerView> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading products: $e');
+      debugPrint('Error loading products: $e');
       setState(() {
         _isLoading = false;
       });
@@ -146,7 +146,7 @@ class _CustomerViewState extends State<CustomerView> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            print('Image load error for ${product.imageUrl}: $error');
+            debugPrint('Image load error for ${product.imageUrl}: $error');
             return Container(
               color: backgroundColor,
               child: const Icon(Icons.broken_image, size: 50, color: lightGray),
@@ -484,7 +484,7 @@ class ProductDetailScreen extends StatelessWidget {
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
-                    print('Image load error for ${product.imageUrl}: $error');
+                    debugPrint('Image load error for ${product.imageUrl}: $error');
                     return Container(
                       color: Colors.white,
                       child: const Icon(Icons.broken_image,

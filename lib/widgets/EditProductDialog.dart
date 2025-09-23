@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:io';
 
 class EditProductDialog extends StatefulWidget {
@@ -327,10 +326,12 @@ class _EditProductDialogState extends State<EditProductDialog> {
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value?.isEmpty ?? true)
+                          if (value?.isEmpty ?? true) {
                             return 'Please enter buying price';
-                          if (double.tryParse(value!) == null)
+                          }
+                          if (double.tryParse(value!) == null) {
                             return 'Please enter valid price';
+                          }
                           return null;
                         },
                       ),
@@ -346,10 +347,12 @@ class _EditProductDialogState extends State<EditProductDialog> {
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value?.isEmpty ?? true)
+                          if (value?.isEmpty ?? true) {
                             return 'Please enter selling price';
-                          if (double.tryParse(value!) == null)
+                          }
+                          if (double.tryParse(value!) == null) {
                             return 'Please enter valid price';
+                          }
                           return null;
                         },
                       ),
@@ -366,8 +369,9 @@ class _EditProductDialogState extends State<EditProductDialog> {
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value?.isEmpty ?? true) return 'Please enter quantity';
-                    if (int.tryParse(value!) == null)
+                    if (int.tryParse(value!) == null) {
                       return 'Please enter valid quantity';
+                    }
                     return null;
                   },
                 ),

@@ -52,13 +52,13 @@ class SupabaseService {
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
           final session = data.session;
           if (session != null) {
-            print('Auth state changed, session active: ${session.user.id}');
+            debugPrint('Auth state changed, session active: ${session.user.id}');
           } else {
-            print('No active session');
+            debugPrint('No active session');
           }
         });
 
-        print('Supabase initialized successfully');
+        debugPrint('Supabase initialized successfully');
       } catch (e) {
         _initialized = false;
         throw Exception('Failed to initialize Supabase: $e');
@@ -148,19 +148,19 @@ class SupabaseService {
 
     try {
       // Try to create new admin user
-      print('Attempting to create admin user: $email');
+      debugPrint('Attempting to create admin user: $email');
       await createAdminUser(email, password);
-      print('Admin user created successfully');
+      debugPrint('Admin user created successfully');
     } catch (e) {
-      print('Could not create user (might already exist): $e');
+      debugPrint('Could not create user (might already exist): $e');
 
       // If user already exists, try to reset password
       try {
-        print('Attempting to reset password for: $email');
+        debugPrint('Attempting to reset password for: $email');
         await resetPasswordForEmail(email);
-        print('Password reset email sent to: $email');
+        debugPrint('Password reset email sent to: $email');
       } catch (resetError) {
-        print('Password reset failed: $resetError');
+        debugPrint('Password reset failed: $resetError');
       }
     }
   }
@@ -191,7 +191,7 @@ class SupabaseService {
     } catch (e) {
       // If profiles table doesn't exist or has issues, just log the error
       // The user will still be created in auth.users
-      print('Warning: Could not update profiles table: $e');
+      debugPrint('Warning: Could not update profiles table: $e');
       // Don't throw an error here as the user creation was successful
     }
   }
@@ -227,7 +227,7 @@ class SupabaseService {
 
       await client.from('profiles').upsert(profileData);
     } catch (e) {
-      print('Warning: Could not update profiles table: $e');
+      debugPrint('Warning: Could not update profiles table: $e');
     }
   }
 
@@ -252,7 +252,7 @@ class SupabaseService {
       } catch (inner) {
         // If selecting email fails (column missing), try a safer select
         // without the email column.
-        print('profiles.email not found, trying fallback select: $inner');
+        debugPrint('profiles.email not found, trying fallback select: $inner');
         response = await client
             .from('profiles')
             .select('id, role, name, created_at')
@@ -273,7 +273,7 @@ class SupabaseService {
         };
       }).toList();
     } catch (e) {
-      print('Error fetching users: $e');
+      debugPrint('Error fetching users: $e');
       return [];
     }
   }
@@ -303,7 +303,7 @@ class SupabaseService {
 
       // Note: Deleting from auth.users requires admin privileges
       // In a production app, you'd need to call an edge function or use the admin API
-      print('User removed from profiles table. Note: Auth user still exists.');
+      debugPrint('User removed from profiles table. Note: Auth user still exists.');
     } catch (e) {
       throw Exception('Failed to delete user: $e');
     }

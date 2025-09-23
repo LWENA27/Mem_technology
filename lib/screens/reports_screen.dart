@@ -23,7 +23,8 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  DateTime _startDate = DateTime(2020, 1, 1); // Start from early date to include all sales
+  DateTime _startDate =
+      DateTime(2020, 1, 1); // Start from early date to include all sales
   DateTime _endDate = DateTime.now();
   bool _isLoading = false;
   Map<String, dynamic>? _reportData;
@@ -94,9 +95,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: errorColor),
+            const Icon(Icons.error_outline, size: 64, color: errorColor),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Failed to load data',
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
@@ -107,7 +108,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               child: Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: lightGray),
+                style: const TextStyle(color: lightGray),
               ),
             ),
             const SizedBox(height: 24),
@@ -133,15 +134,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assessment_outlined, size: 64, color: lightGray),
+            const Icon(Icons.assessment_outlined, size: 64, color: lightGray),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No sales data found',
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: darkGray),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'for the selected period',
               style: TextStyle(color: lightGray),
             ),
@@ -200,10 +201,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.calendar_today, color: primaryGreen, size: 20),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'Report Period',
                 style: TextStyle(
@@ -216,22 +217,28 @@ class _ReportsScreenState extends State<ReportsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
+                flex: 2,
                 child: Text(
                   '${DateFormat('MMM dd, yyyy').format(_startDate)} - ${DateFormat('MMM dd, yyyy').format(_endDate)}',
-                  style: TextStyle(color: darkGray, fontSize: 16),
+                  style: const TextStyle(color: darkGray, fontSize: 16),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: _selectDateRange,
-                icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-                label:
-                    const Text('Change', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryGreen,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: ElevatedButton.icon(
+                  onPressed: _selectDateRange,
+                  icon: const Icon(Icons.edit, color: Colors.white, size: 18),
+                  label: const Text('Change',
+                      style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
             ],
@@ -271,7 +278,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Total Items Sold',
-                '${NumberFormat('#,##0').format(_reportData!['totalItems'])}',
+                NumberFormat('#,##0').format(_reportData!['totalItems']),
                 Icons.shopping_cart,
                 const Color(0xFF2196F3),
               ),
@@ -324,11 +331,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     color: lightGray,
                     fontWeight: FontWeight.w500,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ],
@@ -341,6 +350,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               fontWeight: FontWeight.bold,
               color: color,
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
         ],
       ),
@@ -367,10 +378,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.trending_up, color: primaryGreen, size: 20),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'Top Products',
                 style: TextStyle(
@@ -380,67 +391,71 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
           const SizedBox(height: 16),
           if (topProducts.isEmpty)
-            Center(
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
+                padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text('No product data available',
                     style: TextStyle(color: lightGray)),
               ),
             )
           else
-            ...topProducts
-                .map<Widget>((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: primaryGreen,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  entry.key,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: darkGray),
-                                ),
-                                Text(
-                                  'Quantity sold: ${entry.value}',
-                                  style:
-                                      TextStyle(fontSize: 12, color: lightGray),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${entry.value}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: primaryGreen,
-                              ),
-                            ),
-                          ),
-                        ],
+            ...topProducts.map<Widget>((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: primaryGreen,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ))
-                .toList(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.key,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: darkGray),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            Text(
+                              'Quantity sold: ${entry.value}',
+                              style: const TextStyle(
+                                  fontSize: 12, color: lightGray),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: primaryGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${entry.value}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
         ],
       ),
     );
@@ -469,10 +484,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.receipt, color: primaryGreen, size: 20),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Recent Sales',
                     style: TextStyle(
@@ -485,77 +500,84 @@ class _ReportsScreenState extends State<ReportsScreen> {
               if (recentSales.isNotEmpty)
                 TextButton(
                   onPressed: _showAllSales,
-                  child:
-                      Text('View All', style: TextStyle(color: primaryGreen)),
+                  child: const Text('View All',
+                      style: TextStyle(color: primaryGreen)),
                 ),
             ],
           ),
           const SizedBox(height: 16),
           if (recentSales.isEmpty)
-            Center(
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
+                padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text('No sales data available',
                     style: TextStyle(color: lightGray)),
               ),
             )
           else
-            ...recentSales
-                .map<Widget>((sale) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.shopping_bag,
-                                color: primaryGreen, size: 16),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  sale.productName,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: darkGray),
-                                ),
-                                Text(
-                                  '${sale.customerName} • Qty: ${sale.quantity}',
-                                  style:
-                                      TextStyle(fontSize: 12, color: lightGray),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryGreen),
-                              ),
-                              Text(
-                                DateFormat('MMM dd, HH:mm')
-                                    .format(sale.saleDate),
-                                style:
-                                    TextStyle(fontSize: 11, color: lightGray),
-                              ),
-                            ],
-                          ),
-                        ],
+            ...recentSales.map<Widget>((sale) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.shopping_bag,
+                            color: primaryGreen, size: 16),
                       ),
-                    ))
-                .toList(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              sale.productName,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: darkGray),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            Text(
+                              '${sale.customerName} • Qty: ${sale.quantity}',
+                              style: const TextStyle(
+                                  fontSize: 12, color: lightGray),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryGreen),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            Text(
+                              DateFormat('MMM dd, HH:mm').format(sale.saleDate),
+                              style: const TextStyle(
+                                  fontSize: 11, color: lightGray),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
         ],
       ),
     );
@@ -568,48 +590,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
 
     try {
-      print(
+      debugPrint(
           'Loading sales data for period: ${_startDate.toIso8601String()} to ${_endDate.toIso8601String()}');
 
-      // First try to fetch sales in the specified date range
-      List<Sale> sales = await DatabaseService.instance
+      // Fetch sales data
+      final sales = await DatabaseService.instance
           .getSalesByDateRange(_startDate, _endDate);
-      print('Fetched ${sales.length} sales records in date range');
+      debugPrint('Fetched ${sales.length} sales records');
 
-      // If no sales found in date range, fetch all sales and filter
       if (sales.isEmpty) {
-        print('No sales found in date range. Fetching all sales...');
+        debugPrint('No sales found in date range. Trying to fetch all sales...');
         final allSales = await DatabaseService.instance.getAllSales();
-        print('Total sales in database: ${allSales.length}');
-        
+        debugPrint('Total sales in database: ${allSales.length}');
         if (allSales.isNotEmpty) {
-          print('Sample sale dates:');
-          for (int i = 0; i < allSales.length && i < 5; i++) {
-            print('  Sale ${i + 1}: ${allSales[i].saleDate}');
-          }
-          
-          // Filter sales manually to see if date comparison is the issue
-          sales = allSales.where((sale) {
-            return sale.saleDate.isAfter(_startDate.subtract(const Duration(days: 1))) &&
-                   sale.saleDate.isBefore(_endDate.add(const Duration(days: 1)));
-          }).toList();
-          print('Manually filtered sales: ${sales.length}');
-          
-          // If still no sales, just use all sales for now
-          if (sales.isEmpty && allSales.isNotEmpty) {
-            print('Using all sales as fallback');
-            sales = allSales;
-            // Update date range to encompass all sales
-            final dates = sales.map((s) => s.saleDate).toList()..sort();
-            _startDate = dates.first;
-            _endDate = dates.last;
-          }
+          debugPrint('First sale date: ${allSales.first.saleDate}');
+          debugPrint('Last sale date: ${allSales.last.saleDate}');
         }
       }
 
       // Fetch all products for profit/loss calculation
       final products = await DatabaseService.instance.getAllProducts();
-      print('Fetched ${products.length} products');
+      debugPrint('Fetched ${products.length} products');
 
       // Calculate metrics
       final totalSales =
@@ -662,9 +663,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         _isLoading = false;
       });
 
-      print('Report data loaded successfully with ${sales.length} sales');
+      debugPrint('Report data loaded successfully with ${sales.length} sales');
     } catch (e) {
-      print('Error loading report data: $e');
+      debugPrint('Error loading report data: $e');
       setState(() {
         _errorMessage = 'Failed to load report data: $e';
         _reportData = null;
@@ -744,7 +745,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 children: [
                   Text(
                     'All Sales (${_allSales.length})',
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: darkGray),
@@ -764,7 +765,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: primaryGreen.withOpacity(0.1),
-                        child: Icon(Icons.shopping_bag,
+                        child: const Icon(Icons.shopping_bag,
                             color: primaryGreen, size: 16),
                       ),
                       title: Text(sale.productName),
@@ -776,13 +777,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         children: [
                           Text(
                             'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: primaryGreen),
                           ),
                           Text(
                             DateFormat('MMM dd, HH:mm').format(sale.saleDate),
-                            style: TextStyle(fontSize: 11, color: lightGray),
+                            style:
+                                const TextStyle(fontSize: 11, color: lightGray),
                           ),
                         ],
                       ),
