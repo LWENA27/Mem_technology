@@ -629,8 +629,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isLoading = true);
     
       try {
-      final reportService = ReportService();
-      final pdf = await reportService.generateSalesReport(_startDate, _endDate);
+  final reportService = ReportService();
+  await reportService.generateSalesReport(_startDate, _endDate);
       
       if (kIsWeb) {
         // For web, trigger download
