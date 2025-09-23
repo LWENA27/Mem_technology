@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
 import 'login_screen.dart';
@@ -174,9 +175,10 @@ class _CustomerViewState extends State<CustomerView> {
             onPressed: _callOwner,
             tooltip: 'Call Us',
           ),
+          // Use FontAwesome WhatsApp icon for accurate branding
           IconButton(
-            icon: const Icon(Icons.message),
-            color: primaryGreen,
+            icon: const FaIcon(FontAwesomeIcons.whatsapp),
+            color: const Color(0xFF25D366),
             onPressed: _sendWhatsAppMessage,
             tooltip: 'WhatsApp',
           ),
