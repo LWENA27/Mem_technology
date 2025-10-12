@@ -1,6 +1,12 @@
 [build]
   publish = "build/web"
-  command = "flutter build web --release"
+  command = "./build.sh"
+
+[build.environment]
+  # Use Ubuntu 20.04 which has better compatibility
+  NODE_VERSION = "18"
+  # Add any additional environment variables here
+  # SUPABASE_URL and SUPABASE_ANON_KEY should be set in Netlify dashboard
 
 [[redirects]]
   from = "/*"
