@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
-import '../services/DatabaseService.dart';
+import '../services/inventory_service.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 
@@ -35,7 +35,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
   bool _isUploading = false;
 
   final ImagePicker _picker = ImagePicker();
-  final DatabaseService _dbService = DatabaseService.instance;
 
   // Predefined categories
   final List<String> _categories = [
@@ -57,6 +56,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
     super.initState();
     if (widget.product != null) {
       _populateFields();
+    } else {
+      // Set default values for new products to make testing easier
+      _quantityController.text = '1';
     }
   }
 
@@ -174,7 +176,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate()) return;
+    print('Debug: _saveProduct called');
+    
+    if (!_formKey.currentState!.validate()) {
+      print('Debug: Form validation failed');
+      return;
+    }
+    
+    print('Debug: Form validation passed');
 
     setState(() {
       _isLoading = true;
@@ -182,46 +191,47 @@ class _AddProductDialogState extends State<AddProductDialog> {
     });
 
     try {
-      String? imageUrl = _currentImageUrl;
-
-      // Upload new image if selected
+      // For now, we'll skip image upload and focus on core functionality
+      // TODO: Implement image upload to Supabase storage in the future
       if (_selectedImage != null) {
-        setState(() => _isUploading = true);
-        imageUrl = await _dbService.uploadProductImage(_selectedImage!);
-        setState(() => _isUploading = false);
-
-        if (imageUrl == null) {
-          _showErrorMessage(
-              'Failed to upload image. Product will be saved without image.');
-        }
+        // Placeholder for future image upload functionality
+        _showErrorMessage('Image upload not implemented yet. Product will be saved without image.');
       }
 
-      final product = Product(
-        id: widget
-            .product?.id, // Use existing ID for updates, null for new products
-        name: _nameController.text.trim(),
-        brand: _brandController.text.trim(),
-        category: _categoryController.text.trim(),
-        buyingPrice: double.parse(_buyingPriceController.text),
-        sellingPrice: double.parse(_sellingPriceController.text),
-        quantity: int.parse(_quantityController.text),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        imageUrl: imageUrl,
-        dateAdded: widget.product?.dateAdded ?? DateTime.now(),
-      );
+      print('Debug: Starting to save product...');
+      print('Debug: Name: ${_nameController.text}');
+      print('Debug: Category: ${_categoryController.text}');
+      print('Debug: Brand: ${_brandController.text}');
+      print('Debug: Price: ${_sellingPriceController.text}');
+      print('Debug: Quantity: ${_quantityController.text}');
 
       if (widget.product == null) {
         // Adding new product
-        await _dbService.insertProduct(product);
+        await InventoryService.addInventory(
+          name: _nameController.text.trim(),
+          category: _categoryController.text.trim(),
+          brand: _brandController.text.trim(),
+          price: double.parse(_sellingPriceController.text),
+          quantity: int.parse(_quantityController.text),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          sku: null, // Can add SKU field later if needed
+        );
         _showSuccessMessage('Product added successfully!');
       } else {
         // Updating existing product
-        await _dbService.updateProductWithImage(
-          product: product,
-          newImageFile: _selectedImage,
-          removeImage: _selectedImage == null && _currentImageUrl == null,
+        await InventoryService.updateInventory(
+          id: widget.product!.id,
+          name: _nameController.text.trim(),
+          category: _categoryController.text.trim(),
+          brand: _brandController.text.trim(),
+          price: double.parse(_sellingPriceController.text),
+          quantity: int.parse(_quantityController.text),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          sku: null, // Can add SKU field later if needed
         );
         _showSuccessMessage('Product updated successfully!');
       }
@@ -391,6 +401,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
       content: SizedBox(
         width: double.maxFinite,
+        height: MediaQuery.of(context).size.height * 0.8, // Add height constraint
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(

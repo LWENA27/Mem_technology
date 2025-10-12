@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
-import '../services/DatabaseService.dart';
+import '../services/sales_service.dart';
+import '../services/receipt_service.dart';
 
 class MakeSaleDialog extends StatefulWidget {
   final List<Product> availableProducts;
@@ -17,8 +18,13 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
   final _quantityController = TextEditingController();
   final _customerNameController = TextEditingController();
   final _customerPhoneController = TextEditingController();
+  final _businessNameController = TextEditingController();
+  final _businessAddressController = TextEditingController();
+  final _businessPhoneController = TextEditingController();
+  final _businessTINController = TextEditingController();
   Product? _selectedProduct;
   bool _isLoading = false;
+  bool _generateReceipt = true;
 
   @override
   void initState() {
@@ -26,6 +32,11 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
     if (widget.availableProducts.isNotEmpty) {
       _selectedProduct = widget.availableProducts[0];
     }
+    // Set default business info - in a real app, this would come from user profile/tenant settings
+    _businessNameController.text = 'Your Business Name';
+    _businessAddressController.text = 'Your Business Address';
+    _businessPhoneController.text = '+255 XXX XXX XXX';
+    _businessTINController.text = '123-456-789';
   }
 
   _recordSale() async {
@@ -43,38 +54,67 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
       );
       return;
     }
-    final sale = Sale(
-      productId: _selectedProduct!.id,
-      productName: _selectedProduct!.name,
-      quantity: quantity,
-      unitPrice: unitPrice,
-      totalPrice: totalPrice,
-      customerName: _customerNameController.text.trim(),
-      customerPhone: _customerPhoneController.text.trim(),
-      saleDate: DateTime.now(),
-    );
 
     try {
-      await DatabaseService.instance.insertSale(sale);
-      // Update product quantity
-      final updatedProduct = Product(
-        id: _selectedProduct!.id,
-        name: _selectedProduct!.name,
-        category: _selectedProduct!.category,
-        brand: _selectedProduct!.brand,
-        buyingPrice: _selectedProduct!.buyingPrice,
-        sellingPrice: _selectedProduct!.sellingPrice,
-        quantity: _selectedProduct!.quantity - quantity,
-        description: _selectedProduct!.description,
-        dateAdded: _selectedProduct!.dateAdded,
-        imageUrl: _selectedProduct!.imageUrl,
+      // Generate receipt number if needed
+      String? receiptNumber;
+      if (_generateReceipt) {
+        receiptNumber = SalesService.generateReceiptNumber();
+      }
+
+      // Record the sale using SalesService
+      final saleId = await SalesService.recordSale(
+        productId: _selectedProduct!.id,
+        productName: _selectedProduct!.name,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        customerName: _customerNameController.text.trim(),
+        customerPhone: _customerPhoneController.text.trim().isNotEmpty 
+            ? _customerPhoneController.text.trim() 
+            : null,
+        receiptNumber: receiptNumber,
       );
-      await DatabaseService.instance.updateProduct(updatedProduct);
+
+      // Get the created sale for receipt generation
+      Sale? sale;
+      if (_generateReceipt) {
+        sale = await SalesService.getSaleById(saleId);
+      }
+
+      // Generate and download receipt if requested
+      if (_generateReceipt && sale != null) {
+        try {
+          await ReceiptService.downloadReceipt(
+            sale: sale,
+            businessName: _businessNameController.text.trim(),
+            businessAddress: _businessAddressController.text.trim(),
+            businessPhone: _businessPhoneController.text.trim(),
+            businessTIN: _businessTINController.text.trim(),
+            receiptNumber: receiptNumber!,
+          );
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sale recorded and receipt downloaded successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } catch (receiptError) {
+          // Sale was recorded but receipt failed
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sale recorded but receipt download failed: $receiptError'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sale recorded successfully')),
+        );
+      }
 
       Navigator.of(context).pop(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sale recorded successfully')),
-      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error recording sale: $e')),
@@ -171,6 +211,108 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+              
+              // Receipt Generation Section
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _generateReceipt,
+                          onChanged: (value) {
+                            setState(() {
+                              _generateReceipt = value ?? false;
+                            });
+                          },
+                        ),
+                        const Expanded(
+                          child: Text(
+                            'Generate Receipt',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_generateReceipt) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Business Information:',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _businessNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Business Name',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        validator: _generateReceipt
+                            ? (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Business name required for receipt';
+                                }
+                                return null;
+                              }
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _businessAddressController,
+                        decoration: const InputDecoration(
+                          labelText: 'Business Address',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        maxLines: 2,
+                        validator: _generateReceipt
+                            ? (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Business address required for receipt';
+                                }
+                                return null;
+                              }
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _businessPhoneController,
+                              decoration: const InputDecoration(
+                                labelText: 'Business Phone',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              keyboardType: TextInputType.phone,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _businessTINController,
+                              decoration: const InputDecoration(
+                                labelText: 'TIN',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -188,7 +330,7 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Record Sale'),
+              : Text(_generateReceipt ? 'Record Sale & Generate Receipt' : 'Record Sale'),
         ),
       ],
     );

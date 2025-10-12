@@ -27,7 +27,7 @@ class ReportService {
               child: pw.Column(
                 children: [
                   pw.Text(
-                    'MEMTECHNOLOGY',
+                    'InventoryMaster',
                     style: pw.TextStyle(
                         fontSize: 24, fontWeight: pw.FontWeight.bold),
                   ),

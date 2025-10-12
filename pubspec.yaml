@@ -1,5 +1,5 @@
 name: memtechnology
-description: A new Flutter project.
+description: Multi-tenant SaaS inventory management system
 version: 1.0.0+1
 
 environment:
@@ -16,12 +16,12 @@ dependencies:
   intl: ^0.18.0
   image_picker: ^1.0.4
   pdf: ^3.10.4
+  printing: ^5.12.0
   font_awesome_flutter: ^10.4.0
-  flutter_launcher_icons: ^0.13.1
   path_provider: ^2.1.1
   permission_handler: ^11.0.1
   shared_preferences: ^2.2.2
- # file_picker: ^6.1.1  # Use newer version that's more compatible
+  url_launcher: ^6.2.0
 
 dev_dependencies:
   flutter_test:

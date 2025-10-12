@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
-import 'screens/customer_view.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/login_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Supabase.initialize(
+      url: 'https://kzjgdeqfmxkmpmadtbpb.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434',
+    );
+    runApp(const MyApp());
+  } catch (e) {
+    runApp(ErrorApp(errorMessage: 'Failed to initialize Supabase: $e'));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -11,7 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MEMTECHNOLOGY Shop',
+      title: 'InventoryMaster SaaS',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
@@ -30,7 +41,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const CustomerView(),
+      home: const LoginScreen(),
     );
   }
 }
@@ -44,10 +55,10 @@ class ErrorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MEMTECHNOLOGY - Error',
+      title: 'InventoryMaster - Error',
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('MEMTECHNOLOGY - Error'),
+          title: const Text('InventoryMaster - Error'),
           backgroundColor: const Color(0xFF4CAF50),
           foregroundColor: Colors.white,
         ),

@@ -102,7 +102,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
       } else {
         // Handle case where user is logged in via temporary bypass
         setState(() {
-          _currentEmailController.text = 'admin@memtechnology.com';
+          _currentEmailController.text = 'admin@inventorymaster.com';
         });
       }
     } catch (e) {

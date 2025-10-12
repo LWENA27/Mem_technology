@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:memtechnology/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_dashboard.dart';
-import 'customer_view.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,27 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize Supabase when login screen loads
+    // Supabase is already initialized in main.dart, so just check login status
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeSupabase();
-    });
-  }
-
-  _initializeSupabase() async {
-    try {
-      await SupabaseService.instance.initialize();
       setState(() {
         _isSupabaseInitialized = true;
       });
-      // Check login status after initialization
       _checkLoginStatus();
-    } catch (e) {
-      debugPrint('Error initializing Supabase: $e');
-      setState(() {
-        _errorMessage = 'Failed to initialize authentication: $e';
-        _isCheckingSession = false;
-      });
-    }
+    });
   }
 
   _checkLoginStatus() async {
@@ -63,12 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      debugPrint('Starting login status check...');
-
-      final supabase = SupabaseService.instance.client;
+      final supabase = Supabase.instance.client;
       final session = supabase.auth.currentSession;
-
-      debugPrint('Session exists: ${session != null}');
 
       if (session != null && mounted) {
         debugPrint('Checking user role for ID: ${session.user.id}');
@@ -99,10 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
           } else {
-            debugPrint('Navigating to Customer View');
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const CustomerView()),
-            );
+            debugPrint('Returning to Customer View with login success');
+            Navigator.of(context).pop(true); // Return true to indicate successful login
           }
         } else if (mounted) {
           debugPrint('No user data found');
@@ -133,19 +112,6 @@ class _LoginScreenState extends State<LoginScreen> {
   _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // TEMPORARY DEVELOPMENT BYPASS - REMOVE IN PRODUCTION
-    if ((_emailController.text.trim() == 'admin' &&
-            _passwordController.text.trim() == 'admin') ||
-        (_emailController.text.trim() == 'test' &&
-            _passwordController.text.trim() == 'test') ||
-        (_emailController.text.trim() == 'memtech' &&
-            _passwordController.text.trim() == 'memtech')) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const AdminDashboard()),
-      );
-      return;
-    }
-
     if (!_isSupabaseInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Authentication not ready. Please wait.')),
@@ -161,12 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       debugPrint('Starting login process...');
 
-      final response = await SupabaseService.instance
-          .signInWithPassword(
+      final response = await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-      )
-          .timeout(
+      ).timeout(
         const Duration(seconds: 15),
         onTimeout: () {
           throw Exception(
@@ -177,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint('Login successful for user: ${response.user?.id}');
 
       if (mounted && response.user != null) {
-        final supabase = SupabaseService.instance.client;
+        final supabase = Supabase.instance.client;
         final userData = await supabase
             .from('profiles')
             .select('role')
@@ -199,9 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
           } else {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const CustomerView()),
-            );
+            Navigator.of(context).pop(true); // Return success to existing CustomerView
           }
         } else if (mounted) {
           setState(() =>
@@ -253,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
               final email = emailController.text.trim();
               if (email.isNotEmpty && email.contains('@')) {
                 try {
-                  await SupabaseService.instance.resetPassword(email);
+                  await Supabase.instance.client.auth.resetPasswordForEmail(email);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -290,9 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   _continueAsGuest() {
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const CustomerView()),
-      );
+      Navigator.of(context).pop(true); // Return success to existing CustomerView
     }
   }
 
@@ -355,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'MEMTECHNOLOGY',
+                  'InventoryMaster',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -364,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const Text(
-                  'Electronics Shop',
+                  'Multi-Tenant SaaS Platform',
                   style: TextStyle(
                     fontSize: 18,
                     color: lightGray,
@@ -551,43 +511,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Development access hint
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow.shade50,
-                    border: Border.all(color: Colors.orange.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.developer_mode,
-                              color: Colors.orange.shade700, size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Development Access',
-                            style: TextStyle(
-                              color: Colors.orange.shade700,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Use: admin/admin, test/test, or memtech/memtech for quick access',
-                        style: TextStyle(
-                          color: Colors.orange.shade600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
                     if (mounted) {
@@ -628,6 +551,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  final _businessNameController = TextEditingController();
+  final _businessSlugController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -639,6 +564,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color lightGray =
       Color(0xFF757575); // Light gray for secondary text
   static const Color backgroundColor = Color(0xFFF5F5F5); // Light background
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-generate slug from business name
+    _businessNameController.addListener(_updateSlug);
+  }
+
+  void _updateSlug() {
+    final businessName = _businessNameController.text;
+    final slug = businessName
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), '')
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+    _businessSlugController.text = slug;
+  }
+
+  @override
+  void dispose() {
+    _businessNameController.removeListener(_updateSlug);
+    super.dispose();
+  }
 
   _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -652,7 +601,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       debugPrint('Starting registration process...');
 
       // Sign up user with timeout
-      final response = await SupabaseService.instance.signUp(
+      final response = await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         data: {
@@ -669,13 +618,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.user != null && mounted) {
         debugPrint('User created: ${response.user!.id}');
 
-        // Insert user profile with timeout
-        final supabase = SupabaseService.instance.client;
+        final supabase = Supabase.instance.client;
+        
+        // Step 1: Create tenant
+        final tenantData = await supabase.from('tenants').insert({
+          'name': _businessNameController.text.trim(),
+          'slug': _businessSlugController.text.trim(),
+          'public_storefront': true,
+          'metadata': {
+            'owner_name': _nameController.text.trim(),
+            'owner_email': _emailController.text.trim(),
+            'created_via': 'self_registration'
+          }
+        }).select().single().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('Tenant creation timed out');
+          },
+        );
+
+        debugPrint('Tenant created: ${tenantData['id']}');
+
+        // Step 2: Create user profile with tenant reference
         await supabase.from('profiles').insert({
           'id': response.user!.id,
           'email': _emailController.text.trim(),
-          'name': _nameController.text.trim(),
-          'role': 'customer',
+          'role': 'admin', // Business owner gets admin role
+          'tenant_id': tenantData['id'],
         }).timeout(
           const Duration(seconds: 10),
           onTimeout: () {
@@ -683,7 +652,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         );
 
-        debugPrint('Profile created successfully');
+        debugPrint('Profile created successfully with tenant association');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -694,7 +663,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Registration successful! Please check your email to verify your account.',
+                      'Business registration successful! You can now login to manage your inventory.',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -704,7 +673,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 4),
             ),
           );
           Navigator.of(context).pop();
@@ -768,7 +737,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'Create Account',
+                  'Start Your Business',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -777,7 +746,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const Text(
-                  'Join MEMTECHNOLOGY',
+                  'Create Your InventoryMaster Account',
                   style: TextStyle(
                     fontSize: 18,
                     color: lightGray,
@@ -797,6 +766,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
+                          // Personal Information Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: const Text(
+                              'Personal Information',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: darkGray,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _nameController,
                             decoration: InputDecoration(
@@ -847,6 +830,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter email';
                               }
+                              if (!value.contains('@')) {
+                                return 'Please enter a valid email';
+                              }
                               return null;
                             },
                           ),
@@ -877,6 +863,81 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               }
                               if (value.length < 6) {
                                 return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          
+                          // Business Information Section
+                          const SizedBox(height: 32),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: const Text(
+                              'Business Information',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: darkGray,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _businessNameController,
+                            decoration: InputDecoration(
+                              labelText: 'Business Name',
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon:
+                                  const Icon(Icons.business, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
+                              hintText: 'e.g., ABC Electronics Store',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your business name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _businessSlugController,
+                            decoration: InputDecoration(
+                              labelText: 'Business URL (auto-generated)',
+                              labelStyle: const TextStyle(color: lightGray),
+                              prefixIcon:
+                                  const Icon(Icons.link, color: primaryGreen),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: lightGray),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: primaryGreen, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
+                              hintText: 'your-business-url',
+                              helperText: 'This will be your unique store URL',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Business URL is required';
+                              }
+                              if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value)) {
+                                return 'URL can only contain lowercase letters, numbers, and hyphens';
                               }
                               return null;
                             },
@@ -927,7 +988,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       strokeWidth: 2,
                                     )
                                   : const Text(
-                                      'CREATE ACCOUNT',
+                                      'START MY BUSINESS',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,

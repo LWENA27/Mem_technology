@@ -42,6 +42,25 @@ class Product {
     );
   }
 
+  /// Factory constructor for the new inventories table structure
+  factory Product.fromInventoryJson(Map<String, dynamic> json) {
+    final metadata = json['metadata'] as Map<String, dynamic>? ?? {};
+    return Product(
+      id: json['id'] as String?,
+      name: json['name'] as String? ?? 'Unnamed Product',
+      category: metadata['category'] as String? ?? 'Uncategorized',
+      brand: metadata['brand'] as String? ?? 'Unknown Brand',
+      buyingPrice: (json['price'] as num?)?.toDouble() ?? 0.0,
+      sellingPrice: (json['price'] as num?)?.toDouble() ?? 0.0,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      description: metadata['description'] as String?,
+      imageUrl: metadata['image_url'] as String?,
+      dateAdded: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,

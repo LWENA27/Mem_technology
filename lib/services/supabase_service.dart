@@ -53,6 +53,17 @@ class SupabaseService {
   Future<void> initialize() async {
     if (!_initialized) {
       try {
+        // Check if Supabase is already initialized globally by trying to access the client
+        try {
+          final _ = Supabase.instance.client;
+          print('Supabase already initialized globally, skipping local initialization');
+          _initialized = true;
+          return;
+        } catch (e) {
+          // Supabase not initialized yet, proceed with initialization
+          print('Supabase not initialized globally, proceeding with initialization');
+        }
+        
         await Supabase.initialize(
           url: _supabaseUrlFromEnv,
           anonKey: _supabaseAnonKeyFromEnv,
@@ -69,7 +80,7 @@ class SupabaseService {
           }
         });
 
-  print('Supabase initialized successfully');
+        print('Supabase initialized successfully');
       } catch (e) {
         _initialized = false;
         throw Exception('Failed to initialize Supabase: $e');
@@ -150,7 +161,7 @@ class SupabaseService {
 
   // Helper method to create or reset admin access
   Future<void> createOrResetAdminAccess({
-    String email = 'memtechnology01@gmail.com',
+    String email = 'admin@inventorymaster.com',
     String password = 'memtech123456',
   }) async {
     if (!_initialized) {
@@ -159,19 +170,19 @@ class SupabaseService {
 
     try {
       // Try to create new admin user
-  print('Attempting to create admin user: $email');
-  await createAdminUser(email, password);
-  print('Admin user created successfully');
+      print('Attempting to create admin user: $email');
+      await createAdminUser(email, password);
+      print('Admin user created successfully');
     } catch (e) {
-  print('Could not create user (might already exist): $e');
+      print('Could not create user (might already exist): $e');
 
       // If user already exists, try to reset password
       try {
-  print('Attempting to reset password for: $email');
-  await resetPasswordForEmail(email);
-  print('Password reset email sent to: $email');
+        print('Attempting to reset password for: $email');
+        await resetPasswordForEmail(email);
+        print('Password reset email sent to: $email');
       } catch (resetError) {
-  print('Password reset failed: $resetError');
+        print('Password reset failed: $resetError');
       }
     }
   }
@@ -202,7 +213,7 @@ class SupabaseService {
     } catch (e) {
       // If profiles table doesn't exist or has issues, just log the error
       // The user will still be created in auth.users
-  print('Warning: Could not update profiles table: $e');
+      print('Warning: Could not update profiles table: $e');
       // Don't throw an error here as the user creation was successful
     }
   }
@@ -263,7 +274,7 @@ class SupabaseService {
       } catch (inner) {
         // If selecting email fails (column missing), try a safer select
         // without the email column.
-  print('profiles.email not found, trying fallback select: $inner');
+        print('profiles.email not found, trying fallback select: $inner');
         response = await client
             .from('profiles')
             .select('id, role, name, created_at')
@@ -284,7 +295,7 @@ class SupabaseService {
         };
       }).toList();
     } catch (e) {
-  print('Error fetching users: $e');
+      print('Error fetching users: $e');
       return [];
     }
   }
@@ -314,7 +325,7 @@ class SupabaseService {
 
       // Note: Deleting from auth.users requires admin privileges
       // In a production app, you'd need to call an edge function or use the admin API
-  print('User removed from profiles table. Note: Auth user still exists.');
+      print('User removed from profiles table. Note: Auth user still exists.');
     } catch (e) {
       throw Exception('Failed to delete user: $e');
     }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:memtechnology/services/DatabaseService.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:memtechnology/services/inventory_service.dart';
 import 'package:memtechnology/models/product.dart';
 import 'package:memtechnology/widgets/add_product_dialog.dart';
 import 'package:memtechnology/screens/inventory_screen.dart';
@@ -17,7 +17,6 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final _dbService = DatabaseService.instance;
   List<Product> _products = [];
   bool _isLoading = true;
   int _currentIndex = 0;
@@ -44,7 +43,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   _loadProducts() async {
     setState(() => _isLoading = true);
     try {
-      final products = await _dbService.getAllProducts();
+      final products = await InventoryService.getInventories();
       setState(() {
         _products = products;
         _isLoading = false;
@@ -65,12 +64,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const login.LoginScreen()),
-      (route) => false,
-    );
+    try {
+      await Supabase.instance.client.auth.signOut();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const login.LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error logging out: $e')),
+      );
+    }
   }
 
   void _showAddProductDialog() {
@@ -87,7 +91,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('MEMTECHNOLOGY - Admin'),
+        title: const Text('InventoryMaster - Admin'),
         backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         elevation: 4,

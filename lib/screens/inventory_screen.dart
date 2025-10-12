@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:memtechnology/services/DatabaseService.dart';
+import 'package:memtechnology/services/inventory_service.dart';
 import 'package:memtechnology/models/product.dart';
 import 'package:memtechnology/widgets/add_product_dialog.dart';
+import 'package:memtechnology/widgets/make_sale_dialog.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -11,7 +12,6 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  final _dbService = DatabaseService.instance;
   List<Product> _products = [];
   bool _isLoading = true;
 
@@ -30,7 +30,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   _loadProducts() async {
     setState(() => _isLoading = true);
     try {
-      final products = await _dbService.getAllProducts();
+      final products = await InventoryService.getInventories();
       setState(() {
         _products = products;
         _isLoading = false;
@@ -72,7 +72,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     if (confirmed == true) {
       try {
-        await _dbService.deleteProduct(product.id);
+        await InventoryService.deleteInventory(product.id);
         _loadProducts();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -111,6 +111,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
         }
       }
     }
+  }
+
+  _sellProduct(Product product) {
+    showDialog(
+      context: context,
+      builder: (context) => MakeSaleDialog(
+        availableProducts: [product], // Pass only the selected product
+      ),
+    ).then((_) => _loadProducts()); // Refresh products after sale
   }
 
   _editProduct(Product product) {
@@ -419,37 +428,57 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     ),
                                   ],
                                 ),
-                                trailing: PopupMenuButton(
-                                  icon: const Icon(Icons.more_vert,
-                                      color: lightGray),
-                                  itemBuilder: (context) => [
-                                    PopupMenuItem(
-                                      child: const Row(
-                                        children: [
-                                          Icon(Icons.edit,
-                                              color: primaryGreen, size: 20),
-                                          SizedBox(width: 8),
-                                          Text('Edit'),
-                                        ],
-                                      ),
-                                      onTap: () => Future.delayed(
-                                        Duration.zero,
-                                        () => _editProduct(product),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Sell button
+                                    ElevatedButton.icon(
+                                      onPressed: isOutOfStock ? null : () => _sellProduct(product),
+                                      icon: const Icon(Icons.shopping_cart, size: 16),
+                                      label: const Text('Sell'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isOutOfStock ? Colors.grey : primaryGreen,
+                                        foregroundColor: Colors.white,
+                                        minimumSize: const Size(80, 32),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        textStyle: const TextStyle(fontSize: 12),
                                       ),
                                     ),
-                                    PopupMenuItem(
-                                      child: const Row(
-                                        children: [
-                                          Icon(Icons.delete,
-                                              color: Colors.red, size: 20),
-                                          SizedBox(width: 8),
-                                          Text('Delete'),
-                                        ],
-                                      ),
-                                      onTap: () => Future.delayed(
-                                        Duration.zero,
-                                        () => _deleteProduct(product),
-                                      ),
+                                    const SizedBox(width: 8),
+                                    // More options menu
+                                    PopupMenuButton(
+                                      icon: const Icon(Icons.more_vert,
+                                          color: lightGray),
+                                      itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.edit,
+                                                  color: primaryGreen, size: 20),
+                                              SizedBox(width: 8),
+                                              Text('Edit'),
+                                            ],
+                                          ),
+                                          onTap: () => Future.delayed(
+                                            Duration.zero,
+                                            () => _editProduct(product),
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.delete,
+                                                  color: Colors.red, size: 20),
+                                              SizedBox(width: 8),
+                                              Text('Delete'),
+                                            ],
+                                          ),
+                                          onTap: () => Future.delayed(
+                                            Duration.zero,
+                                            () => _deleteProduct(product),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),

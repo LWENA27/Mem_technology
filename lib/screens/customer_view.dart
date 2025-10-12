@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 import '../models/product.dart';
 import '../services/DatabaseService.dart';
+import '../services/supabase_service.dart';
 import 'login_screen.dart';
 
 class CustomerView extends StatefulWidget {
@@ -19,6 +22,7 @@ class _CustomerViewState extends State<CustomerView> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
   Set<String> _categories = {'All'};
+  StreamSubscription<AuthState>? _authSubscription;
 
   // MEM Technology Color Scheme
   static const Color primaryGreen = Color(0xFF4CAF50);
@@ -29,7 +33,60 @@ class _CustomerViewState extends State<CustomerView> {
   @override
   void initState() {
     super.initState();
-    _loadProducts();
+    _checkAuthAndLoadProducts();
+    _setupAuthListener();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupAuthListener() async {
+    try {
+      // Don't initialize again - it's already done in _checkAuthAndLoadProducts
+      if (SupabaseService.instance.isInitialized) {
+        _authSubscription = SupabaseService.instance.client.auth.onAuthStateChange.listen((data) {
+          final session = data.session;
+          if (session != null) {
+            debugPrint('Auth state changed - user logged in, reloading products');
+            _loadProducts();
+          } else {
+            debugPrint('Auth state changed - user logged out');
+            setState(() {
+              _products = [];
+              _filteredProducts = [];
+              _isLoading = false;
+            });
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error setting up auth listener: $e');
+    }
+  }
+
+  Future<void> _checkAuthAndLoadProducts() async {
+    try {
+      // Initialize Supabase service
+      await SupabaseService.instance.initialize();
+      
+      // Always try to load products first, regardless of auth status
+      await _loadProducts();
+      
+      // Check if user is authenticated (for admin features)
+      if (SupabaseService.instance.isAuthenticated()) {
+        debugPrint('User is authenticated with admin access');
+      } else {
+        debugPrint('User browsing as customer (no admin access)');
+      }
+    } catch (e) {
+      debugPrint('Error during initialization: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -106,9 +163,15 @@ class _CustomerViewState extends State<CustomerView> {
   }
 
   _navigateToLogin() async {
-    Navigator.of(context).push(
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
+    
+    // If login was successful, reload products
+    if (result == true) {
+      debugPrint('Login successful, reloading products...');
+      await _loadProducts();
+    }
   }
 
   Widget _buildProductImage(Product product) {
@@ -163,7 +226,7 @@ class _CustomerViewState extends State<CustomerView> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text(
-          'MEMTECHNOLOGY',
+          'InventoryMaster',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: darkGray,
@@ -183,9 +246,13 @@ class _CustomerViewState extends State<CustomerView> {
             tooltip: 'WhatsApp',
           ),
           IconButton(
-            icon: const Icon(Icons.login),
+            icon: Icon(SupabaseService.instance.isAuthenticated() 
+                ? Icons.admin_panel_settings 
+                : Icons.login),
             onPressed: _navigateToLogin,
-            tooltip: 'Login',
+            tooltip: SupabaseService.instance.isAuthenticated() 
+                ? 'Manage Inventory' 
+                : 'Inventory Login',
           ),
         ],
       ),

@@ -590,27 +590,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
 
     try {
-      debugPrint(
-          'Loading sales data for period: ${_startDate.toIso8601String()} to ${_endDate.toIso8601String()}');
-
       // Fetch sales data
       final sales = await DatabaseService.instance
           .getSalesByDateRange(_startDate, _endDate);
-      debugPrint('Fetched ${sales.length} sales records');
-
-      if (sales.isEmpty) {
-        debugPrint('No sales found in date range. Trying to fetch all sales...');
-        final allSales = await DatabaseService.instance.getAllSales();
-        debugPrint('Total sales in database: ${allSales.length}');
-        if (allSales.isNotEmpty) {
-          debugPrint('First sale date: ${allSales.first.saleDate}');
-          debugPrint('Last sale date: ${allSales.last.saleDate}');
-        }
-      }
 
       // Fetch all products for profit/loss calculation
       final products = await DatabaseService.instance.getAllProducts();
-      debugPrint('Fetched ${products.length} products');
 
       // Calculate metrics
       final totalSales =
@@ -663,9 +648,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         _isLoading = false;
       });
 
-      debugPrint('Report data loaded successfully with ${sales.length} sales');
     } catch (e) {
-      debugPrint('Error loading report data: $e');
       setState(() {
         _errorMessage = 'Failed to load report data: $e';
         _reportData = null;

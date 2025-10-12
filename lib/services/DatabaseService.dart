@@ -170,11 +170,15 @@ class DatabaseService {
       try {
         final supabase = await _getSupabaseClient();
         if (supabase != null) {
-          final response = await supabase.from('products').select();
+          // Query the inventories table instead of products
+          final response = await supabase.from('inventories').select();
           // Normalize response (handles Dart List and JSArray on web)
           final List<dynamic> rows = _normalizeResponseRows(response);
-          return rows.map<Product>((p) {
-            final product = Product.fromJson(Map<String, dynamic>.from(p));
+          return rows.map<Product>((item) {
+            // Map inventories fields to Product model
+            final productJson =
+                _mapInventoryToProduct(Map<String, dynamic>.from(item));
+            final product = Product.fromJson(productJson);
             if (product.imageUrl != null &&
                 !product.imageUrl!.contains('http')) {
               return product.copyWith(
@@ -202,6 +206,26 @@ class DatabaseService {
     return result.map((p) => Product.fromJson(p)).toList();
   }
 
+  // Helper method to get current user's tenant_id
+  Future<String?> _getCurrentUserTenantId() async {
+    try {
+      final supabase = await _getSupabaseClient();
+      if (supabase?.auth.currentUser == null) return null;
+      
+      final userId = supabase!.auth.currentUser!.id;
+      final response = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', userId)
+          .single();
+      
+      return response['tenant_id'] as String?;
+    } catch (e) {
+      debugPrint('Error getting user tenant_id: $e');
+      return null;
+    }
+  }
+
   Future<void> insertProduct(Product product) async {
     final productJson = product.toJson();
     // Local DB insert only for non-web platforms
@@ -215,10 +239,19 @@ class DatabaseService {
       try {
         final supabase = await _getSupabaseClient();
         if (supabase != null) {
-          await supabase.from('products').insert(productJson);
+          // Get current user's tenant_id
+          final tenantId = await _getCurrentUserTenantId();
+          if (tenantId == null) {
+            throw Exception('User tenant not found. Please ensure you are logged in.');
+          }
+
+          // Convert Product to Inventory format
+          final inventoryData = _mapProductToInventory(productJson, tenantId);
+          await supabase.from('inventories').insert(inventoryData);
         }
       } catch (e) {
         debugPrint('Error syncing to Supabase: $e');
+        rethrow; // Re-throw to let caller handle the error
       }
     }
   }
@@ -235,13 +268,25 @@ class DatabaseService {
       try {
         final supabase = await _getSupabaseClient();
         if (supabase != null) {
+          // Get current user's tenant_id
+          final tenantId = await _getCurrentUserTenantId();
+          if (tenantId == null) {
+            throw Exception('User tenant not found. Please ensure you are logged in.');
+          }
+
+          // Convert Product to Inventory format and update
+          final inventoryData = _mapProductToInventory(productJson, tenantId);
+          // Remove tenant_id from update data as it shouldn't change
+          inventoryData.remove('tenant_id');
+          
           await supabase
-              .from('products')
-              .update(productJson)
+              .from('inventories')
+              .update(inventoryData)
               .eq('id', product.id);
         }
       } catch (e) {
         debugPrint('Error syncing update to Supabase: $e');
+        rethrow; // Re-throw to let caller handle the error
       }
     }
   }
@@ -442,13 +487,14 @@ class DatabaseService {
       try {
         final supabase = await _getSupabaseClient();
         if (supabase != null) {
-          await supabase.from('products').delete().eq('id', id);
+          await supabase.from('inventories').delete().eq('id', id);
           if (product?.imageUrl != null) {
             await deleteProductImage(product!.imageUrl!);
           }
         }
       } catch (e) {
         debugPrint('Error deleting product from Supabase: $e');
+        rethrow; // Re-throw to let caller handle the error
       }
     }
   }
@@ -460,12 +506,21 @@ class DatabaseService {
       final supabase = await _getSupabaseClient();
       if (supabase == null) return;
 
+      // Get current user's tenant_id for multi-tenant sync
+      final tenantId = await _getCurrentUserTenantId();
+      if (tenantId == null) {
+        debugPrint('Cannot sync: User tenant not found');
+        return;
+      }
+
       if (!kIsWeb) {
         final db = await sqliteDb;
 
+        // Sync products as inventory items
         final localProducts = await db.query('products');
         for (final productData in localProducts) {
-          await supabase.from('products').upsert(productData);
+          final inventoryData = _mapProductToInventory(productData, tenantId);
+          await supabase.from('inventories').upsert(inventoryData);
         }
 
         final localSales = await db.query('sales');
@@ -546,6 +601,45 @@ class DatabaseService {
     } catch (e) {
       return error.toString();
     }
+  }
+
+  // Helper method to map inventories table fields to Product model fields
+  Map<String, dynamic> _mapInventoryToProduct(Map<String, dynamic> inventory) {
+    // Extract metadata for category and brand
+    final metadata = inventory['metadata'] as Map<String, dynamic>? ?? {};
+
+    return {
+      'id': inventory['id'],
+      'name': inventory['name'],
+      'category': metadata['category'] ?? 'General',
+      'brand': metadata['brand'] ?? 'Generic',
+      'buying_price': (inventory['price'] as num?)?.toDouble() ??
+          0.0, // Use price as buying price
+      'selling_price': (inventory['price'] as num?)?.toDouble() ??
+          0.0, // Use price as selling price
+      'quantity': inventory['quantity'],
+      'description': metadata['description'],
+      'image_url': metadata['image_url'],
+      'date_added': inventory['created_at'] ?? DateTime.now().toIso8601String(),
+    };
+  }
+
+  // Helper method to convert Product to Inventory format for multi-tenant database
+  Map<String, dynamic> _mapProductToInventory(Map<String, dynamic> product, String tenantId) {
+    return {
+      'tenant_id': tenantId,
+      'name': product['name'],
+      'sku': product['id'], // Use product ID as SKU for now
+      'quantity': product['quantity'],
+      'price': product['selling_price'], // Use selling price as the main price
+      'metadata': {
+        'category': product['category'],
+        'brand': product['brand'],
+        'description': product['description'],
+        'image_url': product['image_url'],
+        'buying_price': product['buying_price'],
+      },
+    };
   }
 }
 
