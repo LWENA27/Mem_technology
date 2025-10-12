@@ -607,7 +607,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       debugPrint('Starting registration process...');
       debugPrint('Email: ${_emailController.text.trim()}');
       debugPrint('Business: ${_businessNameController.text.trim()}');
-      
+
       // Check Supabase connection status
       debugPrint('Supabase client initialized');
 
@@ -629,9 +629,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.user != null && mounted) {
         debugPrint('User created: ${response.user!.id}');
 
+        // Wait a moment for auth context to be fully established
+        await Future.delayed(const Duration(milliseconds: 500));
+
         final supabase = Supabase.instance.client;
+        
+        // Verify user is authenticated before proceeding
+        final currentUser = supabase.auth.currentUser;
+        if (currentUser == null) {
+          throw Exception('Authentication failed after user creation');
+        }
+        debugPrint('User authenticated: ${currentUser.id}');
 
         // Step 1: Create tenant
+        debugPrint('Creating tenant for user: ${currentUser.id}');
         final tenantData = await supabase
             .from('tenants')
             .insert({
@@ -699,24 +710,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       debugPrint('Registration error: $e');
       if (mounted) {
         String errorMessage = 'Registration failed: ';
-        
+
         // Handle specific Supabase Auth errors
         if (e.toString().contains('email_address_invalid')) {
-          errorMessage += 'Please enter a valid email address. Make sure there are no spaces or special characters.';
+          errorMessage +=
+              'Please enter a valid email address. Make sure there are no spaces or special characters.';
         } else if (e.toString().contains('User already registered')) {
-          errorMessage += 'This email is already registered. Please use a different email or try logging in.';
+          errorMessage +=
+              'This email is already registered. Please use a different email or try logging in.';
         } else if (e.toString().contains('Password should be at least')) {
           errorMessage += 'Password must be at least 6 characters long.';
         } else if (e.toString().contains('Invalid email')) {
-          errorMessage += 'The email format is invalid. Please check and try again.';
+          errorMessage +=
+              'The email format is invalid. Please check and try again.';
+        } else if (e.toString().contains('row-level security policy')) {
+          errorMessage += 'Database permission error. Please try again in a few moments or contact support.';
+        } else if (e.toString().contains('Authentication failed after user creation')) {
+          errorMessage += 'Registration partially completed. Please try logging in with your credentials.';
         } else if (e.toString().contains('timeout')) {
-          errorMessage += 'Request timed out. Please check your internet connection and try again.';
+          errorMessage +=
+              'Request timed out. Please check your internet connection and try again.';
         } else if (e.toString().contains('Network')) {
-          errorMessage += 'Network error. Please check your internet connection.';
+          errorMessage +=
+              'Network error. Please check your internet connection.';
         } else {
           errorMessage += e.toString();
         }
-        
+
         setState(() => _errorMessage = errorMessage);
       }
     } finally {
@@ -866,7 +886,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 return 'Please enter email';
                               }
                               // Improved email validation
-                              final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                              final emailRegex = RegExp(
+                                  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
                               if (!emailRegex.hasMatch(value.trim())) {
                                 return 'Please enter a valid email address';
                               }
