@@ -605,6 +605,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       debugPrint('Starting registration process...');
+      debugPrint('Email: ${_emailController.text.trim()}');
+      debugPrint('Business: ${_businessNameController.text.trim()}');
+      
+      // Check Supabase connection status
+      debugPrint('Supabase client initialized');
 
       // Sign up user with timeout
       final response = await Supabase.instance.client.auth.signUp(
@@ -693,7 +698,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       debugPrint('Registration error: $e');
       if (mounted) {
-        setState(() => _errorMessage = 'Registration failed: ${e.toString()}');
+        String errorMessage = 'Registration failed: ';
+        
+        // Handle specific Supabase Auth errors
+        if (e.toString().contains('email_address_invalid')) {
+          errorMessage += 'Please enter a valid email address. Make sure there are no spaces or special characters.';
+        } else if (e.toString().contains('User already registered')) {
+          errorMessage += 'This email is already registered. Please use a different email or try logging in.';
+        } else if (e.toString().contains('Password should be at least')) {
+          errorMessage += 'Password must be at least 6 characters long.';
+        } else if (e.toString().contains('Invalid email')) {
+          errorMessage += 'The email format is invalid. Please check and try again.';
+        } else if (e.toString().contains('timeout')) {
+          errorMessage += 'Request timed out. Please check your internet connection and try again.';
+        } else if (e.toString().contains('Network')) {
+          errorMessage += 'Network error. Please check your internet connection.';
+        } else {
+          errorMessage += e.toString();
+        }
+        
+        setState(() => _errorMessage = errorMessage);
       }
     } finally {
       if (mounted) {
@@ -841,8 +865,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter email';
                               }
-                              if (!value.contains('@')) {
-                                return 'Please enter a valid email';
+                              // Improved email validation
+                              final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                              if (!emailRegex.hasMatch(value.trim())) {
+                                return 'Please enter a valid email address';
                               }
                               return null;
                             },
