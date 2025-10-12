@@ -211,14 +211,14 @@ class DatabaseService {
     try {
       final supabase = await _getSupabaseClient();
       if (supabase?.auth.currentUser == null) return null;
-      
+
       final userId = supabase!.auth.currentUser!.id;
       final response = await supabase
           .from('profiles')
           .select('tenant_id')
           .eq('id', userId)
           .single();
-      
+
       return response['tenant_id'] as String?;
     } catch (e) {
       debugPrint('Error getting user tenant_id: $e');
@@ -242,7 +242,8 @@ class DatabaseService {
           // Get current user's tenant_id
           final tenantId = await _getCurrentUserTenantId();
           if (tenantId == null) {
-            throw Exception('User tenant not found. Please ensure you are logged in.');
+            throw Exception(
+                'User tenant not found. Please ensure you are logged in.');
           }
 
           // Convert Product to Inventory format
@@ -271,14 +272,15 @@ class DatabaseService {
           // Get current user's tenant_id
           final tenantId = await _getCurrentUserTenantId();
           if (tenantId == null) {
-            throw Exception('User tenant not found. Please ensure you are logged in.');
+            throw Exception(
+                'User tenant not found. Please ensure you are logged in.');
           }
 
           // Convert Product to Inventory format and update
           final inventoryData = _mapProductToInventory(productJson, tenantId);
           // Remove tenant_id from update data as it shouldn't change
           inventoryData.remove('tenant_id');
-          
+
           await supabase
               .from('inventories')
               .update(inventoryData)
@@ -625,7 +627,8 @@ class DatabaseService {
   }
 
   // Helper method to convert Product to Inventory format for multi-tenant database
-  Map<String, dynamic> _mapProductToInventory(Map<String, dynamic> product, String tenantId) {
+  Map<String, dynamic> _mapProductToInventory(
+      Map<String, dynamic> product, String tenantId) {
     return {
       'tenant_id': tenantId,
       'name': product['name'],

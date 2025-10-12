@@ -25,7 +25,8 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       final totalPrice = quantity * unitPrice;
       final saleDate = DateTime.now().toIso8601String();
@@ -44,11 +45,8 @@ class SalesService {
         'receipt_number': receiptNumber,
       };
 
-      final response = await _supabase
-          .from('sales')
-          .insert(saleData)
-          .select()
-          .single();
+      final response =
+          await _supabase.from('sales').insert(saleData).select().single();
 
       // Get current inventory quantity first
       final currentInventory = await _supabase
@@ -56,19 +54,19 @@ class SalesService {
           .select('quantity')
           .eq('id', productId)
           .single();
-      
+
       final currentQuantity = currentInventory['quantity'] as int;
       final newQuantity = currentQuantity - quantity;
-      
+
       if (newQuantity < 0) {
-        throw Exception('Insufficient inventory. Available: $currentQuantity, Requested: $quantity');
+        throw Exception(
+            'Insufficient inventory. Available: $currentQuantity, Requested: $quantity');
       }
 
       // Update inventory quantity - subtract the sold quantity
       await _supabase
           .from('inventories')
-          .update({'quantity': newQuantity})
-          .eq('id', productId);
+          .update({'quantity': newQuantity}).eq('id', productId);
 
       return response['id'];
     } catch (e) {
@@ -89,7 +87,8 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       final response = await _supabase
           .from('sales')
@@ -116,7 +115,8 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       final response = await _supabase
           .from('sales')
@@ -132,7 +132,8 @@ class SalesService {
     }
   }
 
-  static Future<double> getTotalSales({DateTime? startDate, DateTime? endDate}) async {
+  static Future<double> getTotalSales(
+      {DateTime? startDate, DateTime? endDate}) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
@@ -145,7 +146,8 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       var query = _supabase
           .from('sales')

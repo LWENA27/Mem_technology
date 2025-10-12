@@ -433,15 +433,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   children: [
                                     // Sell button
                                     ElevatedButton.icon(
-                                      onPressed: isOutOfStock ? null : () => _sellProduct(product),
-                                      icon: const Icon(Icons.shopping_cart, size: 16),
+                                      onPressed: isOutOfStock
+                                          ? null
+                                          : () => _sellProduct(product),
+                                      icon: const Icon(Icons.shopping_cart,
+                                          size: 16),
                                       label: const Text('Sell'),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: isOutOfStock ? Colors.grey : primaryGreen,
+                                        backgroundColor: isOutOfStock
+                                            ? Colors.grey
+                                            : primaryGreen,
                                         foregroundColor: Colors.white,
                                         minimumSize: const Size(80, 32),
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        textStyle: const TextStyle(fontSize: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        textStyle:
+                                            const TextStyle(fontSize: 12),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -454,7 +461,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                           child: const Row(
                                             children: [
                                               Icon(Icons.edit,
-                                                  color: primaryGreen, size: 20),
+                                                  color: primaryGreen,
+                                                  size: 20),
                                               SizedBox(width: 8),
                                               Text('Edit'),
                                             ],

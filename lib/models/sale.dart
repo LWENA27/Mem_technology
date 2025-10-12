@@ -54,18 +54,18 @@ class Sale {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'tenant_id': tenantId,
-    'product_id': productId,
-    'product_name': productName,
-    'quantity': quantity,
-    'unit_price': unitPrice,
-    'total_price': totalPrice,
-    'customer_name': customerName,
-    'customer_phone': customerPhone,
-    'sale_date': saleDate.toIso8601String(),
-    'receipt_number': receiptNumber,
-    'metadata': metadata,
-    'created_at': createdAt?.toIso8601String(),
-  };
+        'id': id,
+        'tenant_id': tenantId,
+        'product_id': productId,
+        'product_name': productName,
+        'quantity': quantity,
+        'unit_price': unitPrice,
+        'total_price': totalPrice,
+        'customer_name': customerName,
+        'customer_phone': customerPhone,
+        'sale_date': saleDate.toIso8601String(),
+        'receipt_number': receiptNumber,
+        'metadata': metadata,
+        'created_at': createdAt?.toIso8601String(),
+      };
 }

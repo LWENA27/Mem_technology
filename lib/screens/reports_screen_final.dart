@@ -382,59 +382,57 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             )
           else
-            ...topProducts
-                .map<Widget>((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: primaryGreen,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  entry.key,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: darkGray),
-                                ),
-                                Text(
-                                  'Quantity sold: ${entry.value}',
-                                  style:
-                                      const TextStyle(fontSize: 12, color: lightGray),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${entry.value}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: primaryGreen,
-                              ),
-                            ),
-                          ),
-                        ],
+            ...topProducts.map<Widget>((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: primaryGreen,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ))
-                ,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.key,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: darkGray),
+                            ),
+                            Text(
+                              'Quantity sold: ${entry.value}',
+                              style: const TextStyle(
+                                  fontSize: 12, color: lightGray),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${entry.value}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: primaryGreen,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
         ],
       ),
     );
@@ -479,8 +477,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               if (recentSales.isNotEmpty)
                 TextButton(
                   onPressed: _showAllSales,
-                  child:
-                      const Text('View All', style: TextStyle(color: primaryGreen)),
+                  child: const Text('View All',
+                      style: TextStyle(color: primaryGreen)),
                 ),
             ],
           ),
@@ -494,62 +492,59 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             )
           else
-            ...recentSales
-                .map<Widget>((sale) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Row(
+            ...recentSales.map<Widget>((sale) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.shopping_bag,
+                            color: primaryGreen, size: 16),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              sale.productName,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: darkGray),
+                            ),
+                            Text(
+                              '${sale.customerName} • Qty: ${sale.quantity}',
+                              style: const TextStyle(
+                                  fontSize: 12, color: lightGray),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.shopping_bag,
-                                color: primaryGreen, size: 16),
+                          Text(
+                            'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: primaryGreen),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  sale.productName,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: darkGray),
-                                ),
-                                Text(
-                                  '${sale.customerName} • Qty: ${sale.quantity}',
-                                  style:
-                                      const TextStyle(fontSize: 12, color: lightGray),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'TSH ${NumberFormat('#,##0.00').format(sale.totalPrice)}',
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryGreen),
-                              ),
-                              Text(
-                                DateFormat('MMM dd, HH:mm')
-                                    .format(sale.saleDate),
-                                style:
-                                    const TextStyle(fontSize: 11, color: lightGray),
-                              ),
-                            ],
+                          Text(
+                            DateFormat('MMM dd, HH:mm').format(sale.saleDate),
+                            style:
+                                const TextStyle(fontSize: 11, color: lightGray),
                           ),
                         ],
                       ),
-                    ))
-                ,
+                    ],
+                  ),
+                )),
         ],
       ),
     );
@@ -619,7 +614,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
         };
         _isLoading = false;
       });
-
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to load report data: $e';
@@ -738,7 +732,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ),
                           Text(
                             DateFormat('MMM dd, HH:mm').format(sale.saleDate),
-                            style: const TextStyle(fontSize: 11, color: lightGray),
+                            style:
+                                const TextStyle(fontSize: 11, color: lightGray),
                           ),
                         ],
                       ),

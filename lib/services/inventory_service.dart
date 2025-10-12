@@ -18,7 +18,8 @@ class InventoryService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       final response = await _supabase
           .from('inventories')
@@ -26,7 +27,9 @@ class InventoryService {
           .eq('tenant_id', tenantId)
           .order('name');
 
-      return response.map<Product>((item) => Product.fromInventoryJson(item)).toList();
+      return response
+          .map<Product>((item) => Product.fromInventoryJson(item))
+          .toList();
     } catch (e) {
       throw Exception('Failed to load inventories: $e');
     }
@@ -49,13 +52,13 @@ class InventoryService {
       print('  brand: $brand');
       print('  price: $price');
       print('  quantity: $quantity');
-      
+
       final user = _supabase.auth.currentUser;
       if (user == null) {
         print('Debug: User not authenticated');
         throw Exception('User not authenticated');
       }
-      
+
       print('Debug: User authenticated: ${user.id}');
 
       // Get user's tenant ID
@@ -67,8 +70,9 @@ class InventoryService {
 
       final tenantId = profile['tenant_id'];
       print('Debug: Tenant ID: $tenantId');
-      
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       final inventoryData = {
         'tenant_id': tenantId,
@@ -126,10 +130,7 @@ class InventoryService {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      await _supabase
-          .from('inventories')
-          .update(inventoryData)
-          .eq('id', id);
+      await _supabase.from('inventories').update(inventoryData).eq('id', id);
     } catch (e) {
       throw Exception('Failed to update inventory: $e');
     }
@@ -138,10 +139,7 @@ class InventoryService {
   /// Delete inventory item
   static Future<void> deleteInventory(String id) async {
     try {
-      await _supabase
-          .from('inventories')
-          .delete()
-          .eq('id', id);
+      await _supabase.from('inventories').delete().eq('id', id);
     } catch (e) {
       throw Exception('Failed to delete inventory: $e');
     }
@@ -150,11 +148,8 @@ class InventoryService {
   /// Get inventory item by ID
   static Future<Product> getInventoryById(String id) async {
     try {
-      final response = await _supabase
-          .from('inventories')
-          .select()
-          .eq('id', id)
-          .single();
+      final response =
+          await _supabase.from('inventories').select().eq('id', id).single();
 
       return Product.fromInventoryJson(response);
     } catch (e) {
@@ -165,13 +160,10 @@ class InventoryService {
   /// Update inventory quantity (used when making sales)
   static Future<void> updateQuantity(String id, int newQuantity) async {
     try {
-      await _supabase
-          .from('inventories')
-          .update({
-            'quantity': newQuantity,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', id);
+      await _supabase.from('inventories').update({
+        'quantity': newQuantity,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', id);
     } catch (e) {
       throw Exception('Failed to update quantity: $e');
     }
@@ -191,7 +183,8 @@ class InventoryService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null) throw Exception('User not associated with a tenant');
+      if (tenantId == null)
+        throw Exception('User not associated with a tenant');
 
       final response = await _supabase
           .from('inventories')
@@ -200,7 +193,9 @@ class InventoryService {
           .or('name.ilike.%$query%,sku.ilike.%$query%')
           .order('name');
 
-      return response.map<Product>((item) => Product.fromInventoryJson(item)).toList();
+      return response
+          .map<Product>((item) => Product.fromInventoryJson(item))
+          .toList();
     } catch (e) {
       throw Exception('Failed to search inventories: $e');
     }

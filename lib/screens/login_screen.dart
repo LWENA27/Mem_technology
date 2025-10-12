@@ -81,7 +81,8 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           } else {
             debugPrint('Returning to Customer View with login success');
-            Navigator.of(context).pop(true); // Return true to indicate successful login
+            Navigator.of(context)
+                .pop(true); // Return true to indicate successful login
           }
         } else if (mounted) {
           debugPrint('No user data found');
@@ -127,10 +128,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       debugPrint('Starting login process...');
 
-      final response = await Supabase.instance.client.auth.signInWithPassword(
+      final response = await Supabase.instance.client.auth
+          .signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 15),
         onTimeout: () {
           throw Exception(
@@ -163,7 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
             );
           } else {
-            Navigator.of(context).pop(true); // Return success to existing CustomerView
+            Navigator.of(context)
+                .pop(true); // Return success to existing CustomerView
           }
         } else if (mounted) {
           setState(() =>
@@ -215,7 +219,8 @@ class _LoginScreenState extends State<LoginScreen> {
               final email = emailController.text.trim();
               if (email.isNotEmpty && email.contains('@')) {
                 try {
-                  await Supabase.instance.client.auth.resetPasswordForEmail(email);
+                  await Supabase.instance.client.auth
+                      .resetPasswordForEmail(email);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -252,7 +257,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   _continueAsGuest() {
     if (mounted) {
-      Navigator.of(context).pop(true); // Return success to existing CustomerView
+      Navigator.of(context)
+          .pop(true); // Return success to existing CustomerView
     }
   }
 
@@ -619,23 +625,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
         debugPrint('User created: ${response.user!.id}');
 
         final supabase = Supabase.instance.client;
-        
+
         // Step 1: Create tenant
-        final tenantData = await supabase.from('tenants').insert({
-          'name': _businessNameController.text.trim(),
-          'slug': _businessSlugController.text.trim(),
-          'public_storefront': true,
-          'metadata': {
-            'owner_name': _nameController.text.trim(),
-            'owner_email': _emailController.text.trim(),
-            'created_via': 'self_registration'
-          }
-        }).select().single().timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            throw Exception('Tenant creation timed out');
-          },
-        );
+        final tenantData = await supabase
+            .from('tenants')
+            .insert({
+              'name': _businessNameController.text.trim(),
+              'slug': _businessSlugController.text.trim(),
+              'public_storefront': true,
+              'metadata': {
+                'owner_name': _nameController.text.trim(),
+                'owner_email': _emailController.text.trim(),
+                'created_via': 'self_registration'
+              }
+            })
+            .select()
+            .single()
+            .timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw Exception('Tenant creation timed out');
+              },
+            );
 
         debugPrint('Tenant created: ${tenantData['id']}');
 
@@ -867,7 +878,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               return null;
                             },
                           ),
-                          
+
                           // Business Information Section
                           const SizedBox(height: 32),
                           Container(
@@ -888,8 +899,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             decoration: InputDecoration(
                               labelText: 'Business Name',
                               labelStyle: const TextStyle(color: lightGray),
-                              prefixIcon:
-                                  const Icon(Icons.business, color: primaryGreen),
+                              prefixIcon: const Icon(Icons.business,
+                                  color: primaryGreen),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(color: lightGray),

@@ -228,7 +228,8 @@ class _SalesScreenState extends State<SalesScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Text(
@@ -242,7 +243,8 @@ class _SalesScreenState extends State<SalesScreen> {
                                       if (sale.receiptNumber != null)
                                         IconButton(
                                           icon: const Icon(Icons.receipt),
-                                          onPressed: () => _downloadReceipt(sale),
+                                          onPressed: () =>
+                                              _downloadReceipt(sale),
                                           tooltip: 'Download Receipt',
                                         ),
                                     ],
@@ -250,7 +252,8 @@ class _SalesScreenState extends State<SalesScreen> {
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      const Icon(Icons.person, size: 16, color: Colors.grey),
+                                      const Icon(Icons.person,
+                                          size: 16, color: Colors.grey),
                                       const SizedBox(width: 4),
                                       Text(
                                         sale.customerName,
@@ -258,11 +261,13 @@ class _SalesScreenState extends State<SalesScreen> {
                                       ),
                                     ],
                                   ),
-                                  if (sale.customerPhone?.isNotEmpty == true) ...[
+                                  if (sale.customerPhone?.isNotEmpty ==
+                                      true) ...[
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        const Icon(Icons.phone, size: 16, color: Colors.grey),
+                                        const Icon(Icons.phone,
+                                            size: 16, color: Colors.grey),
                                         const SizedBox(width: 4),
                                         Text(
                                           sale.customerPhone!,
@@ -273,7 +278,8 @@ class _SalesScreenState extends State<SalesScreen> {
                                   ],
                                   const SizedBox(height: 8),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Qty: ${sale.quantity}',
@@ -287,7 +293,8 @@ class _SalesScreenState extends State<SalesScreen> {
                                   ),
                                   const Divider(),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         _formatDate(sale.saleDate),

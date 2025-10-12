@@ -177,12 +177,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   Future<void> _saveProduct() async {
     print('Debug: _saveProduct called');
-    
+
     if (!_formKey.currentState!.validate()) {
       print('Debug: Form validation failed');
       return;
     }
-    
+
     print('Debug: Form validation passed');
 
     setState(() {
@@ -195,7 +195,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
       // TODO: Implement image upload to Supabase storage in the future
       if (_selectedImage != null) {
         // Placeholder for future image upload functionality
-        _showErrorMessage('Image upload not implemented yet. Product will be saved without image.');
+        _showErrorMessage(
+            'Image upload not implemented yet. Product will be saved without image.');
       }
 
       print('Debug: Starting to save product...');
@@ -401,7 +402,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
       title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
       content: SizedBox(
         width: double.maxFinite,
-        height: MediaQuery.of(context).size.height * 0.8, // Add height constraint
+        height:
+            MediaQuery.of(context).size.height * 0.8, // Add height constraint
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(

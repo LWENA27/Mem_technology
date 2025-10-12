@@ -647,7 +647,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
         };
         _isLoading = false;
       });
-
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to load report data: $e';

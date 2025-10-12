@@ -47,10 +47,13 @@ class _CustomerViewState extends State<CustomerView> {
     try {
       // Don't initialize again - it's already done in _checkAuthAndLoadProducts
       if (SupabaseService.instance.isInitialized) {
-        _authSubscription = SupabaseService.instance.client.auth.onAuthStateChange.listen((data) {
+        _authSubscription = SupabaseService
+            .instance.client.auth.onAuthStateChange
+            .listen((data) {
           final session = data.session;
           if (session != null) {
-            debugPrint('Auth state changed - user logged in, reloading products');
+            debugPrint(
+                'Auth state changed - user logged in, reloading products');
             _loadProducts();
           } else {
             debugPrint('Auth state changed - user logged out');
@@ -71,10 +74,10 @@ class _CustomerViewState extends State<CustomerView> {
     try {
       // Initialize Supabase service
       await SupabaseService.instance.initialize();
-      
+
       // Always try to load products first, regardless of auth status
       await _loadProducts();
-      
+
       // Check if user is authenticated (for admin features)
       if (SupabaseService.instance.isAuthenticated()) {
         debugPrint('User is authenticated with admin access');
@@ -166,7 +169,7 @@ class _CustomerViewState extends State<CustomerView> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
-    
+
     // If login was successful, reload products
     if (result == true) {
       debugPrint('Login successful, reloading products...');
@@ -246,12 +249,12 @@ class _CustomerViewState extends State<CustomerView> {
             tooltip: 'WhatsApp',
           ),
           IconButton(
-            icon: Icon(SupabaseService.instance.isAuthenticated() 
-                ? Icons.admin_panel_settings 
+            icon: Icon(SupabaseService.instance.isAuthenticated()
+                ? Icons.admin_panel_settings
                 : Icons.login),
             onPressed: _navigateToLogin,
-            tooltip: SupabaseService.instance.isAuthenticated() 
-                ? 'Manage Inventory' 
+            tooltip: SupabaseService.instance.isAuthenticated()
+                ? 'Manage Inventory'
                 : 'Inventory Login',
           ),
         ],
@@ -551,7 +554,8 @@ class ProductDetailScreen extends StatelessWidget {
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
-                    debugPrint('Image load error for ${product.imageUrl}: $error');
+                    debugPrint(
+                        'Image load error for ${product.imageUrl}: $error');
                     return Container(
                       color: Colors.white,
                       child: const Icon(Icons.broken_image,

@@ -69,8 +69,8 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
         quantity: quantity,
         unitPrice: unitPrice,
         customerName: _customerNameController.text.trim(),
-        customerPhone: _customerPhoneController.text.trim().isNotEmpty 
-            ? _customerPhoneController.text.trim() 
+        customerPhone: _customerPhoneController.text.trim().isNotEmpty
+            ? _customerPhoneController.text.trim()
             : null,
         receiptNumber: receiptNumber,
       );
@@ -92,10 +92,11 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
             businessTIN: _businessTINController.text.trim(),
             receiptNumber: receiptNumber!,
           );
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Sale recorded and receipt downloaded successfully'),
+              content:
+                  Text('Sale recorded and receipt downloaded successfully'),
               backgroundColor: Colors.green,
             ),
           );
@@ -103,7 +104,8 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
           // Sale was recorded but receipt failed
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Sale recorded but receipt download failed: $receiptError'),
+              content: Text(
+                  'Sale recorded but receipt download failed: $receiptError'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -212,7 +214,7 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Receipt Generation Section
               Container(
                 decoration: BoxDecoration(
@@ -330,7 +332,9 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(_generateReceipt ? 'Record Sale & Generate Receipt' : 'Record Sale'),
+              : Text(_generateReceipt
+                  ? 'Record Sale & Generate Receipt'
+                  : 'Record Sale'),
         ),
       ],
     );

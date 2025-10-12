@@ -62,15 +62,15 @@ class Product {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'category': category,
-    'brand': brand,
-    'buying_price': buyingPrice,
-    'selling_price': sellingPrice,
-    'quantity': quantity,
-    'description': description,
-    'image_url': imageUrl,
-    'date_added': dateAdded.toIso8601String(),
-  };
+        'id': id,
+        'name': name,
+        'category': category,
+        'brand': brand,
+        'buying_price': buyingPrice,
+        'selling_price': sellingPrice,
+        'quantity': quantity,
+        'description': description,
+        'image_url': imageUrl,
+        'date_added': dateAdded.toIso8601String(),
+      };
 }

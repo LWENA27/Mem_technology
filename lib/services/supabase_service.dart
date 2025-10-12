@@ -56,14 +56,16 @@ class SupabaseService {
         // Check if Supabase is already initialized globally by trying to access the client
         try {
           final _ = Supabase.instance.client;
-          print('Supabase already initialized globally, skipping local initialization');
+          print(
+              'Supabase already initialized globally, skipping local initialization');
           _initialized = true;
           return;
         } catch (e) {
           // Supabase not initialized yet, proceed with initialization
-          print('Supabase not initialized globally, proceeding with initialization');
+          print(
+              'Supabase not initialized globally, proceeding with initialization');
         }
-        
+
         await Supabase.initialize(
           url: _supabaseUrlFromEnv,
           anonKey: _supabaseAnonKeyFromEnv,

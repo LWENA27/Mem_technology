@@ -24,9 +24,9 @@ class ReceiptService {
     String? receiptNumber,
   }) async {
     final pdf = pw.Document();
-    
+
     // Generate receipt number if not provided
-    final String finalReceiptNumber = receiptNumber ?? 
+    final String finalReceiptNumber = receiptNumber ??
         'RCP${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
     pdf.addPage(
@@ -38,10 +38,11 @@ class ReceiptService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               // Header Section
-              _buildHeader(businessName, businessAddress, businessPhone, businessTIN),
-              
+              _buildHeader(
+                  businessName, businessAddress, businessPhone, businessTIN),
+
               pw.SizedBox(height: 20),
-              
+
               // Receipt Title and Number
               pw.Center(
                 child: pw.Column(
@@ -64,30 +65,30 @@ class ReceiptService {
                   ],
                 ),
               ),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Customer and Date Info
               _buildCustomerInfo(sale),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Items Table
               _buildItemsTable(sale),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Total Section
               _buildTotalSection(sale),
-              
+
               pw.SizedBox(height: 30),
-              
+
               // Footer
               _buildFooter(),
-              
+
               // Spacer to push signature to bottom
               pw.Spacer(),
-              
+
               // Signature Section
               _buildSignatureSection(),
             ],
@@ -99,7 +100,8 @@ class ReceiptService {
     return pdf.save();
   }
 
-  static pw.Widget _buildHeader(String businessName, String address, String phone, String tin) {
+  static pw.Widget _buildHeader(
+      String businessName, String address, String phone, String tin) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
@@ -330,7 +332,8 @@ class ReceiptService {
       receiptNumber: receiptNumber,
     );
 
-    final String fileName = 'receipt_${sale.id.substring(0, 8)}_${DateFormat('yyyyMMdd').format(sale.saleDate)}.pdf';
+    final String fileName =
+        'receipt_${sale.id.substring(0, 8)}_${DateFormat('yyyyMMdd').format(sale.saleDate)}.pdf';
 
     if (kIsWeb) {
       // Web download using universal approach
@@ -350,7 +353,8 @@ class ReceiptService {
   }
 
   /// Download file on desktop/mobile platforms
-  static Future<void> _downloadDesktopFile(Uint8List data, String fileName) async {
+  static Future<void> _downloadDesktopFile(
+      Uint8List data, String fileName) async {
     if (!kIsWeb) {
       // Use the printing package's native support
       await Printing.sharePdf(bytes: data, filename: fileName);
