@@ -629,15 +629,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.user != null && mounted) {
         debugPrint('User created: ${response.user!.id}');
 
+        final supabase = Supabase.instance.client;
+        
+        // Check if user needs email confirmation
+        if (response.session == null) {
+          debugPrint('User created but session is null - email confirmation may be required');
+          
+          // Try to sign in the user directly since we don't want email confirmation
+          try {
+            debugPrint('Attempting direct sign-in after registration...');
+            final signInResponse = await supabase.auth.signInWithPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
+            
+            if (signInResponse.user == null) {
+              // Registration succeeded but immediate login failed
+              // This means email confirmation is required
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Account created successfully! Please check your email to confirm your account, then try logging in.',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: primaryGreen,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    duration: const Duration(seconds: 6),
+                  ),
+                );
+                Navigator.of(context).pop();
+              }
+              return; // Exit early since we can't complete registration without email confirmation
+            }
+          } catch (signInError) {
+            debugPrint('Sign-in after registration failed: $signInError');
+            throw Exception('Registration completed but automatic login failed. Please try logging in manually.');
+          }
+        }
+
         // Wait a moment for auth context to be fully established
         await Future.delayed(const Duration(milliseconds: 500));
-
-        final supabase = Supabase.instance.client;
         
         // Verify user is authenticated before proceeding
         final currentUser = supabase.auth.currentUser;
         if (currentUser == null) {
-          throw Exception('Authentication failed after user creation');
+          throw Exception('Authentication failed after user creation. Please try logging in manually.');
         }
         debugPrint('User authenticated: ${currentUser.id}');
 
@@ -726,7 +773,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         } else if (e.toString().contains('row-level security policy')) {
           errorMessage += 'Database permission error. Please try again in a few moments or contact support.';
         } else if (e.toString().contains('Authentication failed after user creation')) {
-          errorMessage += 'Registration partially completed. Please try logging in with your credentials.';
+          errorMessage += 'Account created successfully but automatic login failed. Please try logging in manually with your credentials.';
+        } else if (e.toString().contains('Registration completed but automatic login failed')) {
+          errorMessage += 'Account created successfully! Please try logging in with your email and password.';
         } else if (e.toString().contains('timeout')) {
           errorMessage +=
               'Request timed out. Please check your internet connection and try again.';
