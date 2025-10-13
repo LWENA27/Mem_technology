@@ -195,6 +195,24 @@ class SupabaseService {
       await initialize();
     }
 
+    // Get current user's tenant_id to assign to new admin
+    final currentUser = client.auth.currentUser;
+    if (currentUser == null) {
+      throw Exception('Must be logged in to create admin users');
+    }
+
+    // Get the current user's tenant_id
+    final currentUserProfile = await client
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', currentUser.id)
+        .single();
+
+    final tenantId = currentUserProfile['tenant_id'];
+    if (tenantId == null) {
+      throw Exception('Current user not associated with a tenant');
+    }
+
     // Sign up the new user
     final response = await client.auth.signUp(
       email: email,
@@ -206,11 +224,12 @@ class SupabaseService {
     }
 
     try {
-      // Add admin role to profiles table
+      // Add admin role to profiles table with same tenant_id
       await client.from('profiles').upsert({
         'id': response.user!.id,
         'role': 'admin',
         'email': email,
+        'tenant_id': tenantId, // Assign to same tenant as current admin
       });
     } catch (e) {
       // If profiles table doesn't exist or has issues, just log the error
@@ -227,6 +246,24 @@ class SupabaseService {
       await initialize();
     }
 
+    // Get current user's tenant_id to assign to new user
+    final currentUser = client.auth.currentUser;
+    if (currentUser == null) {
+      throw Exception('Must be logged in to create users');
+    }
+
+    // Get the current user's tenant_id
+    final currentUserProfile = await client
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', currentUser.id)
+        .single();
+
+    final tenantId = currentUserProfile['tenant_id'];
+    if (tenantId == null) {
+      throw Exception('Current user not associated with a tenant');
+    }
+
     // Sign up the new user
     final response = await client.auth.signUp(
       email: email,
@@ -238,11 +275,12 @@ class SupabaseService {
     }
 
     try {
-      // Add user to profiles table with specified role
+      // Add user to profiles table with specified role and same tenant_id
       final profileData = {
         'id': response.user!.id,
         'role': role,
         'email': email,
+        'tenant_id': tenantId, // Assign to same tenant as current admin
       };
 
       if (name != null && name.isNotEmpty) {

@@ -326,11 +326,29 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
 
     try {
       final supabase = SupabaseService.instance.client;
+      final currentUser = supabase.auth.currentUser;
+      
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
 
-      // Load all users from profiles table
+      // First get the current user's tenant_id
+      final currentUserProfile = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', currentUser.id)
+          .single();
+
+      final tenantId = currentUserProfile['tenant_id'];
+      if (tenantId == null) {
+        throw Exception('User not associated with a tenant');
+      }
+
+      // Load only users from the same tenant
       final usersData = await supabase
           .from('profiles')
-          .select('id, email, role, created_at')
+          .select('id, email, role, created_at, tenant_id')
+          .eq('tenant_id', tenantId)
           .order('created_at', ascending: false);
 
       setState(() {
