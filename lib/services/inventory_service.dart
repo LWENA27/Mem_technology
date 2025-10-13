@@ -40,15 +40,25 @@ class InventoryService {
     try {
       print('Debug: Loading public inventories for guest users');
       
+      // First get all public tenant IDs
+      final publicTenants = await _supabase
+          .from('tenants')
+          .select('id')
+          .eq('public_storefront', true);
+      
+      final tenantIds = publicTenants.map((tenant) => tenant['id']).toList();
+      print('Debug: Found ${tenantIds.length} public tenants: $tenantIds');
+      
+      if (tenantIds.isEmpty) {
+        print('Debug: No public tenants found');
+        return [];
+      }
+      
+      // Then get all inventories from these tenants
       final response = await _supabase
           .from('inventories')
-          .select('''
-            *,
-            tenants!inner (
-              public_storefront
-            )
-          ''')
-          .eq('tenants.public_storefront', true)
+          .select('*')
+          .inFilter('tenant_id', tenantIds)
           .order('name');
 
       print('Debug: Found ${response.length} public products');
