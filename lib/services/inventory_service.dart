@@ -35,6 +35,33 @@ class InventoryService {
     }
   }
 
+  /// Get all products from public storefronts (for guest browsing)
+  static Future<List<Product>> getPublicInventories() async {
+    try {
+      print('Debug: Loading public inventories for guest users');
+      
+      final response = await _supabase
+          .from('inventories')
+          .select('''
+            *,
+            tenants!inner (
+              public_storefront
+            )
+          ''')
+          .eq('tenants.public_storefront', true)
+          .order('name');
+
+      print('Debug: Found ${response.length} public products');
+      
+      return response
+          .map<Product>((item) => Product.fromInventoryJson(item))
+          .toList();
+    } catch (e) {
+      print('Debug: Error loading public inventories: $e');
+      throw Exception('Failed to load public inventories: $e');
+    }
+  }
+
   /// Add new inventory item
   static Future<String> addInventory({
     required String name,

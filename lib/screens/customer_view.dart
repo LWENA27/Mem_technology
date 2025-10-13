@@ -95,9 +95,9 @@ class _CustomerViewState extends State<CustomerView> {
   Future<void> _loadProducts() async {
     setState(() => _isLoading = true);
     try {
-      debugPrint('Loading products...');
-      final products = await InventoryService.getInventories();
-      debugPrint('Products loaded: count = \'${products.length}\'');
+      debugPrint('Loading public products for customer view...');
+      final products = await InventoryService.getPublicInventories();
+      debugPrint('Public products loaded: count = \'${products.length}\'');
       final categories = products.map((p) => p.category).toSet();
       debugPrint('Categories found: $categories');
       setState(() {
@@ -107,7 +107,7 @@ class _CustomerViewState extends State<CustomerView> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error loading products: $e');
+      debugPrint('Error loading public products: $e');
       setState(() {
         _isLoading = false;
       });
