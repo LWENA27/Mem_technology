@@ -325,8 +325,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 ),
                                 child: product.imageUrl != null
                                     ? ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
                                           product.imageUrl!,
                                           fit: BoxFit.cover,
@@ -420,8 +419,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                       width: 60,
                                       height: 28,
                                       child: ElevatedButton(
-                                        onPressed: () =>
-                                            _sellProduct(product),
+                                        onPressed: () => _sellProduct(product),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: primaryGreen,
                                           foregroundColor: Colors.white,
@@ -443,8 +441,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         child: const Row(
                                           children: [
                                             Icon(Icons.edit,
-                                                color: primaryGreen,
-                                                size: 20),
+                                                color: primaryGreen, size: 20),
                                             SizedBox(width: 8),
                                             Text('Edit'),
                                           ],

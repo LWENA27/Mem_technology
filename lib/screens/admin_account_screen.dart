@@ -327,7 +327,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
     try {
       final supabase = SupabaseService.instance.client;
       final currentUser = supabase.auth.currentUser;
-      
+
       if (currentUser == null) {
         throw Exception('User not authenticated');
       }
@@ -1022,380 +1022,379 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Message Display
-            if (_message != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          // Message Display
+          if (_message != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: _messageType == MessageType.success
+                    ? Colors.green.shade50
+                    : _messageType == MessageType.error
+                        ? Colors.red.shade50
+                        : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
                   color: _messageType == MessageType.success
-                      ? Colors.green.shade50
+                      ? Colors.green
                       : _messageType == MessageType.error
-                          ? Colors.red.shade50
-                          : Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
+                          ? Colors.red
+                          : Colors.blue,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _messageType == MessageType.success
+                        ? Icons.check_circle
+                        : _messageType == MessageType.error
+                            ? Icons.error
+                            : Icons.info,
                     color: _messageType == MessageType.success
                         ? Colors.green
                         : _messageType == MessageType.error
                             ? Colors.red
                             : Colors.blue,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _messageType == MessageType.success
-                          ? Icons.check_circle
-                          : _messageType == MessageType.error
-                              ? Icons.error
-                              : Icons.info,
-                      color: _messageType == MessageType.success
-                          ? Colors.green
-                          : _messageType == MessageType.error
-                              ? Colors.red
-                              : Colors.blue,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _message!,
-                        style: TextStyle(
-                          color: _messageType == MessageType.success
-                              ? Colors.green.shade700
-                              : _messageType == MessageType.error
-                                  ? Colors.red.shade700
-                                  : Colors.blue.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _message!,
+                      style: TextStyle(
+                        color: _messageType == MessageType.success
+                            ? Colors.green.shade700
+                            : _messageType == MessageType.error
+                                ? Colors.red.shade700
+                                : Colors.blue.shade700,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: _clearMessage,
-                      color: _messageType == MessageType.success
-                          ? Colors.green.shade700
-                          : _messageType == MessageType.error
-                              ? Colors.red.shade700
-                              : Colors.blue.shade700,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: _clearMessage,
+                    color: _messageType == MessageType.success
+                        ? Colors.green.shade700
+                        : _messageType == MessageType.error
+                            ? Colors.red.shade700
+                            : Colors.blue.shade700,
+                  ),
+                ],
+              ),
+            ),
+
+          // My Info Section
+          _buildExpandableSection(
+            'My Info',
+            Icons.person,
+            [
+              // Current Admin Info Subsection
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text(
+                          'Current Account Information',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _currentEmailController,
+                      decoration: InputDecoration(
+                        labelText: 'Current Email',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.email),
+                      ),
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildStyledButton(
+                      text: 'Send Password Reset Email',
+                      onPressed: _resetPassword,
+                      icon: Icons.email,
+                      backgroundColor: Colors.orange,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
 
-            // My Info Section
-            _buildExpandableSection(
-              'My Info',
-              Icons.person,
-              [
-                // Current Admin Info Subsection
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
+              // Update Email Subsection
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Form(
+                  key: _emailFormKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.info, color: Colors.blue),
+                          Icon(Icons.email_outlined, color: Colors.green),
                           SizedBox(width: 8),
                           Text(
-                            'Current Account Information',
+                            'Update Email Address',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue,
+                              color: Colors.green,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
-                        controller: _currentEmailController,
+                        controller: _newEmailController,
                         decoration: InputDecoration(
-                          labelText: 'Current Email',
+                          labelText: 'New Email Address',
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12)),
                           prefixIcon: const Icon(Icons.email),
                         ),
-                        readOnly: true,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter new email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter valid email';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
                       _buildStyledButton(
-                        text: 'Send Password Reset Email',
-                        onPressed: _resetPassword,
+                        text: 'Update Email',
+                        onPressed: _updateEmail,
                         icon: Icons.email,
-                        backgroundColor: Colors.orange,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+              ),
+              const SizedBox(height: 24),
 
-                // Update Email Subsection
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Form(
-                    key: _emailFormKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.email_outlined, color: Colors.green),
-                            SizedBox(width: 8),
-                            Text(
-                              'Update Email Address',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _newEmailController,
-                          decoration: InputDecoration(
-                            labelText: 'New Email Address',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            prefixIcon: const Icon(Icons.email),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter new email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Please enter valid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        _buildStyledButton(
-                          text: 'Update Email',
-                          onPressed: _updateEmail,
-                          icon: Icons.email,
-                        ),
-                      ],
-                    ),
-                  ),
+              // Change Password Subsection
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.purple.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.purple.shade200),
                 ),
-                const SizedBox(height: 24),
-
-                // Change Password Subsection
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.purple.shade200),
-                  ),
-                  child: Form(
-                    key: _passwordFormKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.lock_outline, color: Colors.purple),
-                            SizedBox(width: 8),
-                            Text(
-                              'Change Password',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.purple,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildPasswordField(
-                          controller: _newPasswordController,
-                          label: 'New Password',
-                          isVisible: _isNewPasswordVisible,
-                          onToggleVisibility: () => setState(() =>
-                              _isNewPasswordVisible = !_isNewPasswordVisible),
-                          validator: (value) {
-                            if (value == null || value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        _buildPasswordField(
-                          controller: _confirmPasswordController,
-                          label: 'Confirm New Password',
-                          isVisible: _isCurrentPasswordVisible,
-                          onToggleVisibility: () => setState(() =>
-                              _isCurrentPasswordVisible =
-                                  !_isCurrentPasswordVisible),
-                          validator: (value) {
-                            if (value != _newPasswordController.text) {
-                              return 'Passwords do not match';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        _buildStyledButton(
-                          text: 'Change Password',
-                          onPressed: _updatePassword,
-                          icon: Icons.lock,
-                          backgroundColor: Colors.purple,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // User Management Section
-            _buildExpandableSection(
-              'User Management',
-              Icons.group,
-              [
-                // Search Bar
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: 'Search users by email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                });
-                                _filterUsers();
-                              },
-                            )
-                          : null,
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                      _filterUsers();
-                    },
-                  ),
-                ),
-
-                // Tab Selection + Sync Button
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Row(
+                child: Form(
+                  key: _passwordFormKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _selectedUserTab = 'admins';
-                            });
-                          },
-                          icon: const Icon(Icons.admin_panel_settings),
-                          label: Text(
-                              'Admin Users (${_filteredAdminUsers.length})'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _selectedUserTab == 'admins'
-                                ? primaryGreen
-                                : Colors.grey.shade200,
-                            foregroundColor: _selectedUserTab == 'admins'
-                                ? Colors.white
-                                : Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      const Row(
+                        children: [
+                          Icon(Icons.lock_outline, color: Colors.purple),
+                          SizedBox(width: 8),
+                          Text(
+                            'Change Password',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.purple,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _selectedUserTab = 'customers';
-                            });
-                          },
-                          icon: const Icon(Icons.people),
-                          label: Text(
-                              'Customers (${_filteredCustomerUsers.length})'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _selectedUserTab == 'customers'
-                                ? primaryGreen
-                                : Colors.grey.shade200,
-                            foregroundColor: _selectedUserTab == 'customers'
-                                ? Colors.white
-                                : Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
+                      const SizedBox(height: 12),
+                      _buildPasswordField(
+                        controller: _newPasswordController,
+                        label: 'New Password',
+                        isVisible: _isNewPasswordVisible,
+                        onToggleVisibility: () => setState(() =>
+                            _isNewPasswordVisible = !_isNewPasswordVisible),
+                        validator: (value) {
+                          if (value == null || value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
                       ),
-                      const SizedBox(width: 12),
-                      // Sync users button (calls Edge Function)
-                      IconButton(
-                        onPressed: _isLoading ? null : _triggerSyncUsers,
-                        icon: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.sync),
-                        tooltip: 'Sync users from auth',
+                      const SizedBox(height: 16),
+                      _buildPasswordField(
+                        controller: _confirmPasswordController,
+                        label: 'Confirm New Password',
+                        isVisible: _isCurrentPasswordVisible,
+                        onToggleVisibility: () => setState(() =>
+                            _isCurrentPasswordVisible =
+                                !_isCurrentPasswordVisible),
+                        validator: (value) {
+                          if (value != _newPasswordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildStyledButton(
+                        text: 'Change Password',
+                        onPressed: _updatePassword,
+                        icon: Icons.lock,
+                        backgroundColor: Colors.purple,
                       ),
                     ],
                   ),
                 ),
+              ),
+            ],
+          ),
 
-                // Add User Section
-                if (_selectedUserTab == 'admins') ...[
-                  _buildAddAdminUserSection(),
-                ] else ...[
-                  _buildAddCustomerUserSection(),
-                ],
+          // User Management Section
+          _buildExpandableSection(
+            'User Management',
+            Icons.group,
+            [
+              // Search Bar
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Search users by email',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                              _filterUsers();
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                    _filterUsers();
+                  },
+                ),
+              ),
 
-                const SizedBox(height: 24),
+              // Tab Selection + Sync Button
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _selectedUserTab = 'admins';
+                          });
+                        },
+                        icon: const Icon(Icons.admin_panel_settings),
+                        label:
+                            Text('Admin Users (${_filteredAdminUsers.length})'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedUserTab == 'admins'
+                              ? primaryGreen
+                              : Colors.grey.shade200,
+                          foregroundColor: _selectedUserTab == 'admins'
+                              ? Colors.white
+                              : Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _selectedUserTab = 'customers';
+                          });
+                        },
+                        icon: const Icon(Icons.people),
+                        label: Text(
+                            'Customers (${_filteredCustomerUsers.length})'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedUserTab == 'customers'
+                              ? primaryGreen
+                              : Colors.grey.shade200,
+                          foregroundColor: _selectedUserTab == 'customers'
+                              ? Colors.white
+                              : Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Sync users button (calls Edge Function)
+                    IconButton(
+                      onPressed: _isLoading ? null : _triggerSyncUsers,
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.sync),
+                      tooltip: 'Sync users from auth',
+                    ),
+                  ],
+                ),
+              ),
 
-                // Users List
-                if (_isLoadingUsers)
-                  const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                else if (_selectedUserTab == 'admins')
-                  _buildUsersList(_filteredAdminUsers, 'admin')
-                else
-                  _buildUsersList(_filteredCustomerUsers, 'customer'),
+              // Add User Section
+              if (_selectedUserTab == 'admins') ...[
+                _buildAddAdminUserSection(),
+              ] else ...[
+                _buildAddCustomerUserSection(),
               ],
-            ),
-          ],
-        ),
-      );
+
+              const SizedBox(height: 24),
+
+              // Users List
+              if (_isLoadingUsers)
+                const Center(
+                  child: CircularProgressIndicator(),
+                )
+              else if (_selectedUserTab == 'admins')
+                _buildUsersList(_filteredAdminUsers, 'admin')
+              else
+                _buildUsersList(_filteredCustomerUsers, 'customer'),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -63,7 +63,7 @@ Should return JSON response if Supabase is accessible.
 
 ### Test 3: Registration with Different Email
 Try registering with:
-- Different email format: `test123@example.com`
+- Different email format: `23@example.com`
 - Different email provider: `test@outlook.com`
 
 ## 🔧 Quick Fixes to Deploy

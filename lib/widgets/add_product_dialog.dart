@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
 import '../services/inventory_service.dart';
+import '../services/image_upload_service.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 class AddProductDialog extends StatefulWidget {
   final Product? product; // For editing existing products
@@ -30,6 +32,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _descriptionController = TextEditingController();
 
   File? _selectedImage;
+  XFile? _selectedImageFile;
   String? _currentImageUrl;
   bool _isLoading = false;
   bool _isUploading = false;
@@ -106,7 +109,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     await _getImage(ImageSource.gallery);
                   },
                 ),
-                if (_selectedImage != null || _currentImageUrl != null)
+                  if (_selectedImage != null || _selectedImageFile != null || _currentImageUrl != null)
                   ListTile(
                     leading: const Icon(Icons.delete, color: Colors.red),
                     title: const Text('Remove Image',
@@ -115,6 +118,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                       Navigator.pop(context);
                       setState(() {
                         _selectedImage = null;
+                        _selectedImageFile = null;
                         _currentImageUrl = null;
                       });
                     },
@@ -139,12 +143,31 @@ class _AddProductDialogState extends State<AddProductDialog> {
         imageQuality: 85,
       );
 
-      if (pickedFile != null && !kIsWeb) {
+      if (pickedFile != null) {
+        // Validate file size
+        final bytes = await pickedFile.readAsBytes();
+        final sizeInMB = ImageUploadService.getFileSizeInMB(bytes.length);
+        
+        if (sizeInMB > 10) {
+          _showErrorMessage('Image too large. Please select an image smaller than 10MB.');
+          return;
+        }
+        
+        // Validate file type
+        if (!ImageUploadService.isValidImageFile(pickedFile.name)) {
+          _showErrorMessage('Invalid image format. Please select JPG, PNG, GIF, or WebP.');
+          return;
+        }
+
         setState(() {
-          _selectedImage = File(pickedFile.path);
-          _currentImageUrl =
-              null; // Clear current URL when new image is selected
+          _selectedImageFile = pickedFile;
+          if (!kIsWeb) {
+            _selectedImage = File(pickedFile.path);
+          }
+          _currentImageUrl = null; // Clear current URL when new image is selected
         });
+
+        _showSuccessMessage('Image selected successfully!');
       }
     } catch (e) {
       _showErrorMessage('Error picking image: $e');
@@ -187,16 +210,36 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
     setState(() {
       _isLoading = true;
-      _isUploading = _selectedImage != null;
+      _isUploading = _selectedImageFile != null;
     });
 
     try {
-      // For now, we'll skip image upload and focus on core functionality
-      // TODO: Implement image upload to Supabase storage in the future
-      if (_selectedImage != null) {
-        // Placeholder for future image upload functionality
-        _showErrorMessage(
-            'Image upload not implemented yet. Product will be saved without image.');
+      String? imageUrl = _currentImageUrl; // Keep existing image URL if no new image
+
+      // Upload new image if selected
+      if (_selectedImageFile != null) {
+        print('Debug: Uploading image...');
+        setState(() {
+          _isUploading = true;
+        });
+
+        try {
+          imageUrl = await ImageUploadService.uploadImage(
+            imageFile: _selectedImageFile!,
+            existingImageUrl: _currentImageUrl,
+          );
+          print('Debug: Image uploaded successfully: $imageUrl');
+          _showSuccessMessage('Image uploaded successfully!');
+        } catch (e) {
+          print('Debug: Image upload failed: $e');
+          _showErrorMessage('Failed to upload image: $e');
+          // Continue with product save even if image upload fails
+          imageUrl = null;
+        } finally {
+          setState(() {
+            _isUploading = false;
+          });
+        }
       }
 
       print('Debug: Starting to save product...');
@@ -205,6 +248,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       print('Debug: Brand: ${_brandController.text}');
       print('Debug: Price: ${_sellingPriceController.text}');
       print('Debug: Quantity: ${_quantityController.text}');
+      print('Debug: Image URL: $imageUrl');
 
       if (widget.product == null) {
         // Adding new product
@@ -218,6 +262,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               ? null
               : _descriptionController.text.trim(),
           sku: null, // Can add SKU field later if needed
+          imageUrl: imageUrl,
         );
         _showSuccessMessage('Product added successfully!');
       } else {
@@ -233,6 +278,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               ? null
               : _descriptionController.text.trim(),
           sku: null, // Can add SKU field later if needed
+          imageUrl: imageUrl,
         );
         _showSuccessMessage('Product updated successfully!');
       }
@@ -254,7 +300,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Widget _buildImagePreview() {
-    if (_selectedImage != null && !kIsWeb) {
+    // Show selected image (works for both web and mobile)
+    if (_selectedImageFile != null) {
       return Container(
         height: 200,
         width: double.infinity,
@@ -264,22 +311,59 @@ class _AddProductDialogState extends State<AddProductDialog> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.file(
-            _selectedImage!,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: Colors.grey[200],
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                    Text('Error loading image'),
-                  ],
-                ),
-              );
-            },
-          ),
+          child: kIsWeb
+              ? FutureBuilder<Uint8List>(
+                  future: _selectedImageFile!.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                                Text('Error loading image'),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  },
+                )
+              : (_selectedImage != null
+                  ? Image.file(
+                      _selectedImage!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                              Text('Error loading image'),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )),
         ),
       );
     } else if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {

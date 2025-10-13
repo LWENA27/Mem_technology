@@ -30,7 +30,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   final List<String> _screenTitles = [
     'Inventory Management',
-    'Sales Management', 
+    'Sales Management',
     'Reports & Analytics',
     'Settings & Users',
   ];
@@ -105,9 +105,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<Widget> _getAppBarActions() {
     List<Widget> actions = [];
-    
+
     // Add screen-specific actions
-    if (_currentIndex == 0 || _currentIndex == 1) { // Inventory or Sales screen
+    if (_currentIndex == 0 || _currentIndex == 1) {
+      // Inventory or Sales screen
       actions.add(
         IconButton(
           icon: const Icon(Icons.refresh, color: Colors.white),
@@ -116,7 +117,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       );
     }
-    
+
     // Always add logout button
     actions.add(
       IconButton(
@@ -125,7 +126,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         tooltip: 'Logout',
       ),
     );
-    
+
     return actions;
   }
 

@@ -39,21 +39,21 @@ class InventoryService {
   static Future<List<Product>> getPublicInventories() async {
     try {
       print('Debug: Loading public inventories for guest users');
-      
+
       // First get all public tenant IDs
       final publicTenants = await _supabase
           .from('tenants')
           .select('id')
           .eq('public_storefront', true);
-      
+
       final tenantIds = publicTenants.map((tenant) => tenant['id']).toList();
       print('Debug: Found ${tenantIds.length} public tenants: $tenantIds');
-      
+
       if (tenantIds.isEmpty) {
         print('Debug: No public tenants found');
         return [];
       }
-      
+
       // Then get all inventories from these tenants
       final response = await _supabase
           .from('inventories')
@@ -62,7 +62,7 @@ class InventoryService {
           .order('name');
 
       print('Debug: Found ${response.length} public products');
-      
+
       return response
           .map<Product>((item) => Product.fromInventoryJson(item))
           .toList();
@@ -81,6 +81,7 @@ class InventoryService {
     required int quantity,
     String? description,
     String? sku,
+    String? imageUrl,
   }) async {
     try {
       print('Debug: addInventory called with:');
@@ -121,6 +122,7 @@ class InventoryService {
           'category': category,
           'brand': brand,
           'description': description ?? '',
+          'image_url': imageUrl,
         },
       };
 
@@ -149,6 +151,7 @@ class InventoryService {
     required int quantity,
     String? description,
     String? sku,
+    String? imageUrl,
   }) async {
     try {
       final user = _supabase.auth.currentUser;
@@ -163,6 +166,7 @@ class InventoryService {
           'category': category,
           'brand': brand,
           'description': description ?? '',
+          'image_url': imageUrl,
         },
         'updated_at': DateTime.now().toIso8601String(),
       };

@@ -164,7 +164,7 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   String _formatCurrency(double amount) {
-    return 'UGX ${amount.toStringAsFixed(0)}';
+    return 'TSH ${amount.toStringAsFixed(0)}';
   }
 
   String _formatDate(DateTime date) {
@@ -174,150 +174,148 @@ class _SalesScreenState extends State<SalesScreen> {
   @override
   Widget build(BuildContext context) {
     return _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Error: $_errorMessage',
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadSales,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : _sales.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No sales recorded yet',
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadSales,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _sales.length,
-                        itemBuilder: (context, index) {
-                          final sale = _sales[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            elevation: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          sale.productName,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      if (sale.receiptNumber != null)
-                                        IconButton(
-                                          icon: const Icon(Icons.receipt),
-                                          onPressed: () =>
-                                              _downloadReceipt(sale),
-                                          tooltip: 'Download Receipt',
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.person,
-                                          size: 16, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        sale.customerName,
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    ],
-                                  ),
-                                  if (sale.customerPhone?.isNotEmpty ==
-                                      true) ...[
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.phone,
-                                            size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          sale.customerPhone!,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Qty: ${sale.quantity}',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      Text(
-                                        '@ ${_formatCurrency(sale.unitPrice)}',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        _formatDate(sale.saleDate),
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Total: ${_formatCurrency(sale.totalPrice)}',
+        ? const Center(child: CircularProgressIndicator())
+        : _errorMessage.isNotEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Error: $_errorMessage',
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadSales,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+            : _sales.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No sales recorded yet',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadSales,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _sales.length,
+                      itemBuilder: (context, index) {
+                        final sale = _sales[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        sale.productName,
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1976D2),
                                         ),
+                                      ),
+                                    ),
+                                    if (sale.receiptNumber != null)
+                                      IconButton(
+                                        icon: const Icon(Icons.receipt),
+                                        onPressed: () => _downloadReceipt(sale),
+                                        tooltip: 'Download Receipt',
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.person,
+                                        size: 16, color: Colors.grey),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      sale.customerName,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                                if (sale.customerPhone?.isNotEmpty == true) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.phone,
+                                          size: 16, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        sale.customerPhone!,
+                                        style: const TextStyle(fontSize: 14),
                                       ),
                                     ],
                                   ),
-                                  if (sale.receiptNumber != null) ...[
-                                    const SizedBox(height: 4),
+                                ],
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
                                     Text(
-                                      'Receipt: ${sale.receiptNumber}',
+                                      'Qty: ${sale.quantity}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    Text(
+                                      '@ ${_formatCurrency(sale.unitPrice)}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _formatDate(sale.saleDate),
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 14,
                                         color: Colors.grey,
-                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Total: ${_formatCurrency(sale.totalPrice)}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1976D2),
                                       ),
                                     ),
                                   ],
+                                ),
+                                if (sale.receiptNumber != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Receipt: ${sale.receiptNumber}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
                                 ],
-                              ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
-                    );
+                          ),
+                        );
+                      },
+                    ),
+                  );
   }
 }
