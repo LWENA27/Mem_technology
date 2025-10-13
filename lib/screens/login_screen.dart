@@ -740,16 +740,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           debugPrint('Profile created successfully with tenant association');
         } else {
           // Profile exists, update it with new tenant
-          await supabase.from('profiles').update({
-            'email': _emailController.text.trim(),
-            'role': 'admin',
-            'tenant_id': tenantData['id'],
-          }).eq('id', response.user!.id).timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw Exception('Profile update timed out');
-            },
-          );
+          await supabase
+              .from('profiles')
+              .update({
+                'email': _emailController.text.trim(),
+                'role': 'admin',
+                'tenant_id': tenantData['id'],
+              })
+              .eq('id', response.user!.id)
+              .timeout(
+                const Duration(seconds: 10),
+                onTimeout: () {
+                  throw Exception('Profile update timed out');
+                },
+              );
           debugPrint('Profile updated successfully with tenant association');
         }
 
@@ -790,7 +794,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         } else if (e.toString().contains('User already registered')) {
           errorMessage +=
               'This email is already registered. Please use a different email or try logging in.';
-        } else if (e.toString().contains('duplicate key value violates unique constraint')) {
+        } else if (e
+            .toString()
+            .contains('duplicate key value violates unique constraint')) {
           errorMessage +=
               'Account already exists. Please try logging in with your email and password instead.';
         } else if (e.toString().contains('Password should be at least')) {

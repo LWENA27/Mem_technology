@@ -440,7 +440,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         width: 60,
                                         height: 28,
                                         child: ElevatedButton(
-                                          onPressed: () => _sellProduct(product),
+                                          onPressed: () =>
+                                              _sellProduct(product),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: primaryGreen,
                                             foregroundColor: Colors.white,
