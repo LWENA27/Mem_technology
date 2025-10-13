@@ -139,7 +139,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   const Icon(Icons.error_outline, color: Colors.white),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text('Failed to ${action == 'delete' ? 'delete' : 'discontinue'} product: $e'),
+                    child: Text(
+                        'Failed to ${action == 'delete' ? 'delete' : 'discontinue'} product: $e'),
                   ),
                 ],
               ),

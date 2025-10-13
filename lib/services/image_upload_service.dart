@@ -42,15 +42,14 @@ class ImageUploadService {
 
       // Compress image if it's too large (limit to 2MB)
       if (imageBytes.length > 2 * 1024 * 1024) {
-        print('Debug: Image too large (${imageBytes.length} bytes), compressing...');
+        print(
+            'Debug: Image too large (${imageBytes.length} bytes), compressing...');
         imageBytes = await _compressImage(imageBytes, fileExtension);
         print('Debug: Compressed to ${imageBytes.length} bytes');
       }
 
       // Upload to Supabase Storage
-      final response = await _supabase.storage
-          .from(_bucketName)
-          .uploadBinary(
+      final response = await _supabase.storage.from(_bucketName).uploadBinary(
             filePath,
             imageBytes,
             fileOptions: FileOptions(
@@ -62,9 +61,8 @@ class ImageUploadService {
       print('Debug: Upload response: $response');
 
       // Get public URL
-      final publicUrl = _supabase.storage
-          .from(_bucketName)
-          .getPublicUrl(filePath);
+      final publicUrl =
+          _supabase.storage.from(_bucketName).getPublicUrl(filePath);
 
       print('Debug: Public URL: $publicUrl');
 
@@ -75,23 +73,63 @@ class ImageUploadService {
     }
   }
 
+  /// Upload multiple images to Supabase Storage and return the public URLs
+  static Future<List<String>> uploadMultipleImages({
+    required List<XFile> imageFiles,
+    List<String>? existingImageUrls,
+  }) async {
+    try {
+      print('Debug: Starting multiple image upload process...');
+      print('Debug: Uploading ${imageFiles.length} images');
+
+      // Delete existing images if provided
+      if (existingImageUrls != null && existingImageUrls.isNotEmpty) {
+        for (final imageUrl in existingImageUrls) {
+          await _deleteImageFromUrl(imageUrl);
+        }
+      }
+
+      final List<String> uploadedUrls = [];
+
+      for (int i = 0; i < imageFiles.length; i++) {
+        final imageFile = imageFiles[i];
+        print('Debug: Uploading image ${i + 1}/${imageFiles.length}');
+
+        try {
+          final url = await uploadImage(imageFile: imageFile);
+          if (url != null) {
+            uploadedUrls.add(url);
+          }
+        } catch (e) {
+          print('Warning: Failed to upload image ${i + 1}: $e');
+          // Continue with other images even if one fails
+        }
+      }
+
+      print(
+          'Debug: Successfully uploaded ${uploadedUrls.length}/${imageFiles.length} images');
+      return uploadedUrls;
+    } catch (e) {
+      print('Error uploading multiple images: $e');
+      throw Exception('Failed to upload images: $e');
+    }
+  }
+
   /// Delete image from storage using URL
   static Future<void> _deleteImageFromUrl(String imageUrl) async {
     try {
       // Extract file path from URL
       final uri = Uri.parse(imageUrl);
       final segments = uri.pathSegments;
-      
+
       // Find the bucket name and file path
       final bucketIndex = segments.indexOf(_bucketName);
       if (bucketIndex >= 0 && bucketIndex < segments.length - 1) {
         final filePath = segments.sublist(bucketIndex + 1).join('/');
         print('Debug: Deleting existing image: $filePath');
-        
-        await _supabase.storage
-            .from(_bucketName)
-            .remove([filePath]);
-        
+
+        await _supabase.storage.from(_bucketName).remove([filePath]);
+
         print('Debug: Existing image deleted successfully');
       }
     } catch (e) {
@@ -103,9 +141,7 @@ class ImageUploadService {
   /// Delete image using file path
   static Future<void> deleteImage(String filePath) async {
     try {
-      await _supabase.storage
-          .from(_bucketName)
-          .remove([filePath]);
+      await _supabase.storage.from(_bucketName).remove([filePath]);
       print('Debug: Image deleted: $filePath');
     } catch (e) {
       print('Error deleting image: $e');
@@ -114,20 +150,23 @@ class ImageUploadService {
   }
 
   /// Simple image compression
-  static Future<Uint8List> _compressImage(Uint8List imageBytes, String fileExtension) async {
+  static Future<Uint8List> _compressImage(
+      Uint8List imageBytes, String fileExtension) async {
     try {
       // For now, implement basic compression by reducing quality
       // In a production app, you might want to use a proper image compression library
-      
+
       // Simple approach: if image is very large, take a sample
-      if (imageBytes.length > 5 * 1024 * 1024) { // 5MB
+      if (imageBytes.length > 5 * 1024 * 1024) {
+        // 5MB
         // Take every 2nd byte for extreme compression
         final compressed = <int>[];
         for (int i = 0; i < imageBytes.length; i += 2) {
           compressed.add(imageBytes[i]);
         }
         return Uint8List.fromList(compressed);
-      } else if (imageBytes.length > 3 * 1024 * 1024) { // 3MB
+      } else if (imageBytes.length > 3 * 1024 * 1024) {
+        // 3MB
         // Take every 1.5th byte
         final compressed = <int>[];
         for (int i = 0; i < imageBytes.length; i += 3) {
@@ -136,7 +175,7 @@ class ImageUploadService {
         }
         return Uint8List.fromList(compressed);
       }
-      
+
       return imageBytes; // Return as-is if not too large
     } catch (e) {
       print('Error compressing image: $e');
@@ -167,14 +206,19 @@ class ImageUploadService {
       // Check if bucket exists, create if it doesn't
       final buckets = await _supabase.storage.listBuckets();
       final bucketExists = buckets.any((bucket) => bucket.name == _bucketName);
-      
+
       if (!bucketExists) {
         print('Debug: Creating storage bucket: $_bucketName');
         await _supabase.storage.createBucket(
           _bucketName,
           BucketOptions(
             public: true,
-            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+            allowedMimeTypes: [
+              'image/jpeg',
+              'image/png',
+              'image/gif',
+              'image/webp'
+            ],
             fileSizeLimit: '10MB', // 10MB limit
           ),
         );

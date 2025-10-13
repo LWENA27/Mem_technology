@@ -9,7 +9,8 @@ class Product {
   final double sellingPrice;
   final int quantity;
   final String? description;
-  final String? imageUrl;
+  final String? imageUrl; // Keep for backward compatibility
+  final List<String> imageUrls; // New field for multiple images
   final DateTime dateAdded;
 
   Product({
@@ -22,8 +23,10 @@ class Product {
     required this.quantity,
     this.description,
     this.imageUrl,
+    List<String>? imageUrls,
     required this.dateAdded,
-  }) : id = (id == null || id.isEmpty) ? const Uuid().v4() : id;
+  })  : id = (id == null || id.isEmpty) ? const Uuid().v4() : id,
+        imageUrls = imageUrls ?? (imageUrl != null ? [imageUrl] : []);
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
@@ -55,6 +58,7 @@ class Product {
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       description: metadata['description'] as String?,
       imageUrl: metadata['image_url'] as String?,
+      imageUrls: Product._parseImageUrls(metadata),
       dateAdded: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -71,6 +75,28 @@ class Product {
         'quantity': quantity,
         'description': description,
         'image_url': imageUrl,
+        'image_urls': imageUrls,
         'date_added': dateAdded.toIso8601String(),
       };
+
+  /// Helper method to parse image URLs from metadata
+  static List<String> _parseImageUrls(Map<String, dynamic> metadata) {
+    // Check for multiple images first
+    if (metadata['image_urls'] != null) {
+      final urls = metadata['image_urls'];
+      if (urls is List) {
+        return urls.cast<String>().where((url) => url.isNotEmpty).toList();
+      }
+    }
+
+    // Fall back to single image URL for backward compatibility
+    final singleUrl = metadata['image_url'] as String?;
+    return singleUrl != null && singleUrl.isNotEmpty ? [singleUrl] : [];
+  }
+
+  /// Get the first image URL (for backward compatibility)
+  String? get firstImageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
+
+  /// Check if product has any images
+  bool get hasImages => imageUrls.isNotEmpty;
 }

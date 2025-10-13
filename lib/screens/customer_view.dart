@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../models/product.dart';
@@ -178,7 +178,9 @@ class _CustomerViewState extends State<CustomerView> {
   }
 
   Widget _buildProductImage(Product product) {
-    if (product.imageUrl == null || product.imageUrl!.isEmpty) {
+    final firstImageUrl = product.firstImageUrl;
+
+    if (firstImageUrl == null || firstImageUrl.isEmpty) {
       return Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -189,37 +191,71 @@ class _CustomerViewState extends State<CustomerView> {
       );
     }
 
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-        child: Image.network(
-          product.imageUrl!,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: backgroundColor,
-              child: const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
-                ),
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint('Image load error for ${product.imageUrl}: $error');
-            return Container(
-              color: backgroundColor,
-              child: const Icon(Icons.broken_image, size: 50, color: lightGray),
-            );
-          },
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            child: Image.network(
+              firstImageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: backgroundColor,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('Image load error for $firstImageUrl: $error');
+                return Container(
+                  color: backgroundColor,
+                  child: const Icon(Icons.broken_image,
+                      size: 50, color: lightGray),
+                );
+              },
+            ),
+          ),
         ),
-      ),
+        // Show multi-image indicator if there are multiple images
+        if (product.imageUrls.length > 1)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.photo_library,
+                      color: Colors.white, size: 12),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${product.imageUrls.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -241,9 +277,9 @@ class _CustomerViewState extends State<CustomerView> {
             onPressed: _callOwner,
             tooltip: 'Call Us',
           ),
-          // Use FontAwesome WhatsApp icon for accurate branding
+          // WhatsApp icon with brand color
           IconButton(
-            icon: const FaIcon(FontAwesomeIcons.whatsapp),
+            icon: const Icon(Icons.message),
             color: const Color(0xFF25D366),
             onPressed: _sendWhatsAppMessage,
             tooltip: 'WhatsApp',
@@ -520,51 +556,7 @@ class ProductDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 300,
-              width: double.infinity,
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 2,
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  product.imageUrl ?? '',
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: Colors.white,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(primaryGreen),
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    debugPrint(
-                        'Image load error for ${product.imageUrl}: $error');
-                    return Container(
-                      color: Colors.white,
-                      child: const Icon(Icons.broken_image,
-                          size: 80, color: lightGray),
-                    );
-                  },
-                ),
-              ),
-            ),
+            _buildImageCarousel(product),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(20),
@@ -658,31 +650,6 @@ class ProductDetailScreen extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: primaryGreen.withOpacity(0.2)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline, color: primaryGreen, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Additional photos coming soon',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: lightGray,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -690,6 +657,156 @@ class ProductDetailScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildImageCarousel(Product product) {
+    final images = product.imageUrls;
+
+    if (images.isEmpty) {
+      return Container(
+        height: 300,
+        width: double.infinity,
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey[100],
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_not_supported, size: 80, color: lightGray),
+            SizedBox(height: 8),
+            Text(
+              'No images available',
+              style: TextStyle(color: lightGray, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (images.length == 1) {
+      return Container(
+        height: 300,
+        width: double.infinity,
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            images.first,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.white,
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.white,
+                child:
+                    const Icon(Icons.broken_image, size: 80, color: lightGray),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Container(
+          height: 300,
+          width: double.infinity,
+          margin: const EdgeInsets.all(16),
+          child: PageView.builder(
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    images[index],
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Colors.white,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(primaryGreen),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.white,
+                        child: const Icon(Icons.broken_image,
+                            size: 80, color: lightGray),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // Image indicators
+        if (images.length > 1)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                images.length,
+                (index) => Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: primaryGreen.withOpacity(0.3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }

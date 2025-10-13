@@ -13,16 +13,17 @@ void main() async {
       anonKey:
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434',
     );
-    print('supabase.supabase_flutter: INFO: ***** Supabase init completed ***** ');
-    
+    print(
+        'supabase.supabase_flutter: INFO: ***** Supabase init completed ***** ');
+
     // Initialize image storage bucket
     await ImageUploadService.initializeStorage();
     print('Image storage initialized');
-    
+
     // Initialize image storage
     await ImageUploadService.initializeStorage();
     print('Image storage initialized');
-    
+
     runApp(const MyApp());
   } catch (e) {
     runApp(ErrorApp(errorMessage: 'Failed to initialize app: $e'));

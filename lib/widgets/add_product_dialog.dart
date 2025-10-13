@@ -31,9 +31,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  File? _selectedImage;
-  XFile? _selectedImageFile;
-  String? _currentImageUrl;
+  List<File> _selectedImages = [];
+  List<XFile> _selectedImageFiles = [];
+  List<String> _currentImageUrls = [];
   bool _isLoading = false;
   bool _isUploading = false;
 
@@ -74,10 +74,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
     _sellingPriceController.text = product.sellingPrice.toString();
     _quantityController.text = product.quantity.toString();
     _descriptionController.text = product.description ?? '';
-    _currentImageUrl = product.imageUrl;
+    _currentImageUrls = List.from(product.imageUrls);
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     try {
       showModalBottomSheet(
         context: context,
@@ -89,13 +89,13 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
-                    'Select Image Source',
+                    'Add Product Images',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.camera_alt),
-                  title: const Text('Camera'),
+                  title: const Text('Take Photo'),
                   onTap: () async {
                     Navigator.pop(context);
                     await _getImage(ImageSource.camera);
@@ -103,23 +103,32 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library),
-                  title: const Text('Gallery'),
+                  title: const Text('Select from Gallery'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _getMultipleImages();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Select Single from Gallery'),
                   onTap: () async {
                     Navigator.pop(context);
                     await _getImage(ImageSource.gallery);
                   },
                 ),
-                  if (_selectedImage != null || _selectedImageFile != null || _currentImageUrl != null)
+                if (_selectedImageFiles.isNotEmpty ||
+                    _currentImageUrls.isNotEmpty)
                   ListTile(
                     leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text('Remove Image',
+                    title: const Text('Clear All Images',
                         style: TextStyle(color: Colors.red)),
                     onTap: () {
                       Navigator.pop(context);
                       setState(() {
-                        _selectedImage = null;
-                        _selectedImageFile = null;
-                        _currentImageUrl = null;
+                        _selectedImages.clear();
+                        _selectedImageFiles.clear();
+                        _currentImageUrls.clear();
                       });
                     },
                   ),
@@ -144,34 +153,74 @@ class _AddProductDialogState extends State<AddProductDialog> {
       );
 
       if (pickedFile != null) {
-        // Validate file size
-        final bytes = await pickedFile.readAsBytes();
-        final sizeInMB = ImageUploadService.getFileSizeInMB(bytes.length);
-        
-        if (sizeInMB > 10) {
-          _showErrorMessage('Image too large. Please select an image smaller than 10MB.');
+        if (!await _validateAndAddImage(pickedFile)) {
           return;
         }
-        
-        // Validate file type
-        if (!ImageUploadService.isValidImageFile(pickedFile.name)) {
-          _showErrorMessage('Invalid image format. Please select JPG, PNG, GIF, or WebP.');
-          return;
-        }
-
-        setState(() {
-          _selectedImageFile = pickedFile;
-          if (!kIsWeb) {
-            _selectedImage = File(pickedFile.path);
-          }
-          _currentImageUrl = null; // Clear current URL when new image is selected
-        });
-
-        _showSuccessMessage('Image selected successfully!');
+        _showSuccessMessage('Image added successfully!');
       }
     } catch (e) {
       _showErrorMessage('Error picking image: $e');
     }
+  }
+
+  Future<void> _getMultipleImages() async {
+    try {
+      final List<XFile> pickedFiles = await _picker.pickMultiImage(
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
+      if (pickedFiles.isNotEmpty) {
+        int addedCount = 0;
+        for (final file in pickedFiles) {
+          if (await _validateAndAddImage(file)) {
+            addedCount++;
+          }
+        }
+
+        if (addedCount > 0) {
+          _showSuccessMessage('$addedCount image(s) added successfully!');
+        }
+      }
+    } catch (e) {
+      _showErrorMessage('Error picking images: $e');
+    }
+  }
+
+  Future<bool> _validateAndAddImage(XFile pickedFile) async {
+    // Check if we already have too many images
+    final totalImages = _selectedImageFiles.length + _currentImageUrls.length;
+    if (totalImages >= 5) {
+      _showErrorMessage('Maximum 5 images allowed per product.');
+      return false;
+    }
+
+    // Validate file size
+    final bytes = await pickedFile.readAsBytes();
+    final sizeInMB = ImageUploadService.getFileSizeInMB(bytes.length);
+
+    if (sizeInMB > 10) {
+      _showErrorMessage(
+          'Image "${pickedFile.name}" is too large. Please select images smaller than 10MB.');
+      return false;
+    }
+
+    // Validate file type
+    if (!ImageUploadService.isValidImageFile(pickedFile.name)) {
+      _showErrorMessage(
+          'Invalid format for "${pickedFile.name}". Please select JPG, PNG, GIF, or WebP.');
+      return false;
+    }
+
+    setState(() {
+      _selectedImageFiles.add(pickedFile);
+      if (!kIsWeb) {
+        _selectedImages.add(File(pickedFile.path));
+      }
+    });
+
+    return true;
   }
 
   void _showErrorMessage(String message) {
@@ -210,31 +259,31 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
     setState(() {
       _isLoading = true;
-      _isUploading = _selectedImageFile != null;
+      _isUploading = _selectedImageFiles.isNotEmpty;
     });
 
     try {
-      String? imageUrl = _currentImageUrl; // Keep existing image URL if no new image
+      List<String> allImageUrls = List.from(_currentImageUrls);
 
-      // Upload new image if selected
-      if (_selectedImageFile != null) {
-        print('Debug: Uploading image...');
+      // Upload new images if selected
+      if (_selectedImageFiles.isNotEmpty) {
+        print('Debug: Uploading ${_selectedImageFiles.length} images...');
         setState(() {
           _isUploading = true;
         });
 
         try {
-          imageUrl = await ImageUploadService.uploadImage(
-            imageFile: _selectedImageFile!,
-            existingImageUrl: _currentImageUrl,
+          final uploadedUrls = await ImageUploadService.uploadMultipleImages(
+            imageFiles: _selectedImageFiles,
           );
-          print('Debug: Image uploaded successfully: $imageUrl');
-          _showSuccessMessage('Image uploaded successfully!');
+          allImageUrls.addAll(uploadedUrls);
+          print('Debug: Images uploaded successfully: $uploadedUrls');
+          _showSuccessMessage(
+              '${uploadedUrls.length} image(s) uploaded successfully!');
         } catch (e) {
           print('Debug: Image upload failed: $e');
-          _showErrorMessage('Failed to upload image: $e');
-          // Continue with product save even if image upload fails
-          imageUrl = null;
+          _showErrorMessage('Failed to upload some images: $e');
+          // Continue with product save even if some image uploads fail
         } finally {
           setState(() {
             _isUploading = false;
@@ -248,7 +297,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       print('Debug: Brand: ${_brandController.text}');
       print('Debug: Price: ${_sellingPriceController.text}');
       print('Debug: Quantity: ${_quantityController.text}');
-      print('Debug: Image URL: $imageUrl');
+      print('Debug: Image URLs: $allImageUrls');
 
       if (widget.product == null) {
         // Adding new product
@@ -262,7 +311,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               ? null
               : _descriptionController.text.trim(),
           sku: null, // Can add SKU field later if needed
-          imageUrl: imageUrl,
+          imageUrls: allImageUrls,
         );
         _showSuccessMessage('Product added successfully!');
       } else {
@@ -278,7 +327,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               ? null
               : _descriptionController.text.trim(),
           sku: null, // Can add SKU field later if needed
-          imageUrl: imageUrl,
+          imageUrls: allImageUrls,
         );
         _showSuccessMessage('Product updated successfully!');
       }
@@ -299,173 +348,187 @@ class _AddProductDialogState extends State<AddProductDialog> {
     }
   }
 
-  Widget _buildImagePreview() {
-    // Show selected image (works for both web and mobile)
-    if (_selectedImageFile != null) {
-      return Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: kIsWeb
-              ? FutureBuilder<Uint8List>(
-                  future: _selectedImageFile!.readAsBytes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Image.memory(
-                        snapshot.data!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[200],
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                                Text('Error loading image'),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    }
-                    return Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  },
-                )
-              : (_selectedImage != null
-                  ? Image.file(
-                      _selectedImage!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[200],
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                              Text('Error loading image'),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )),
-        ),
-      );
-    } else if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
-      // Show current image from URL
-      if (_currentImageUrl!.startsWith('http')) {
-        return Container(
+  Widget _buildImagesGrid() {
+    final totalImages = _selectedImageFiles.length + _currentImageUrls.length;
+
+    if (totalImages == 0) {
+      return GestureDetector(
+        onTap: _pickImages,
+        child: Container(
           height: 200,
           width: double.infinity,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
+            border: Border.all(color: Colors.grey, style: BorderStyle.solid),
             borderRadius: BorderRadius.circular(8),
+            color: Colors.grey[100],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              _currentImageUrl!,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[200],
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                      Text('Error loading image'),
-                    ],
-                  ),
-                );
-              },
-            ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_photo_alternate, size: 50, color: Colors.grey),
+              SizedBox(height: 8),
+              Text('Tap to add product images',
+                  style: TextStyle(color: Colors.grey)),
+              Text('(Up to 5 images)',
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ],
           ),
-        );
-      } else {
-        // Local file path
-        return Container(
-          height: 200,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: (!kIsWeb && File(_currentImageUrl!).existsSync())
-                ? Image.file(
-                    File(_currentImageUrl!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image,
-                                size: 50, color: Colors.grey),
-                            Text('Error loading image'),
-                          ],
-                        ),
-                      );
-                    },
-                  )
-                : Container(
-                    color: Colors.grey[200],
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.image_not_supported,
-                            size: 50, color: Colors.grey),
-                        Text('Image not found'),
-                      ],
-                    ),
-                  ),
-          ),
-        );
-      }
-    } else {
-      return Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey, style: BorderStyle.solid),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[100],
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate, size: 50, color: Colors.grey),
-            SizedBox(height: 8),
-            Text('Tap to add product image',
-                style: TextStyle(color: Colors.grey)),
-          ],
         ),
       );
     }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Product Images ($totalImages/5)',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            if (totalImages < 5)
+              TextButton.icon(
+                onPressed: _pickImages,
+                icon: const Icon(Icons.add_photo_alternate, size: 16),
+                label: const Text('Add More'),
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 1,
+          ),
+          itemCount: totalImages,
+          itemBuilder: (context, index) {
+            return _buildImageTile(index);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageTile(int index) {
+    final isCurrentImage = index < _currentImageUrls.length;
+
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: isCurrentImage
+                ? _buildCurrentImageWidget(_currentImageUrls[index])
+                : _buildSelectedImageWidget(index - _currentImageUrls.length),
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: () => _removeImage(index),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentImageWidget(String imageUrl) {
+    if (imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const Center(child: CircularProgressIndicator());
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image, color: Colors.grey),
+          );
+        },
+      );
+    } else {
+      return Container(
+        color: Colors.grey[200],
+        child: const Icon(Icons.image_not_supported, color: Colors.grey),
+      );
+    }
+  }
+
+  Widget _buildSelectedImageWidget(int fileIndex) {
+    final imageFile = _selectedImageFiles[fileIndex];
+
+    if (kIsWeb) {
+      return FutureBuilder<Uint8List>(
+        future: imageFile.readAsBytes(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Image.memory(
+              snapshot.data!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+    } else {
+      return Image.file(
+        File(imageFile.path),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image, color: Colors.grey),
+          );
+        },
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      if (index < _currentImageUrls.length) {
+        _currentImageUrls.removeAt(index);
+      } else {
+        final fileIndex = index - _currentImageUrls.length;
+        _selectedImageFiles.removeAt(fileIndex);
+        if (!kIsWeb && fileIndex < _selectedImages.length) {
+          _selectedImages.removeAt(fileIndex);
+        }
+      }
+    });
   }
 
   @override
@@ -495,10 +558,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Image section
-                GestureDetector(
-                  onTap: _isLoading ? null : _pickImage,
-                  child: _buildImagePreview(),
-                ),
+                _buildImagesGrid(),
                 if (_isUploading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.0),

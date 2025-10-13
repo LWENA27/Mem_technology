@@ -82,6 +82,7 @@ class InventoryService {
     String? description,
     String? sku,
     String? imageUrl,
+    List<String>? imageUrls,
   }) async {
     try {
       print('Debug: addInventory called with:');
@@ -123,6 +124,7 @@ class InventoryService {
           'brand': brand,
           'description': description ?? '',
           'image_url': imageUrl,
+          'image_urls': imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         },
       };
 
@@ -152,6 +154,7 @@ class InventoryService {
     String? description,
     String? sku,
     String? imageUrl,
+    List<String>? imageUrls,
   }) async {
     try {
       final user = _supabase.auth.currentUser;
@@ -167,6 +170,7 @@ class InventoryService {
           'brand': brand,
           'description': description ?? '',
           'image_url': imageUrl,
+          'image_urls': imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         },
         'updated_at': DateTime.now().toIso8601String(),
       };
@@ -181,7 +185,7 @@ class InventoryService {
   static Future<void> deleteInventory(String id) async {
     try {
       print('Debug: Attempting to delete inventory: $id');
-      
+
       // First check if there are any sales records for this product
       final salesCheck = await _supabase
           .from('sales')
@@ -192,17 +196,16 @@ class InventoryService {
       if (salesCheck.isNotEmpty) {
         print('Debug: Product has sales records, cannot delete');
         throw Exception(
-          'Cannot delete product: This product has sales records. '
-          'Products with sales history cannot be deleted to maintain data integrity. '
-          'Consider setting quantity to 0 to mark as discontinued instead.'
-        );
+            'Cannot delete product: This product has sales records. '
+            'Products with sales history cannot be deleted to maintain data integrity. '
+            'Consider setting quantity to 0 to mark as discontinued instead.');
       }
 
       print('Debug: No sales records found, proceeding with deletion');
-      
+
       // Get the product to check if it has an image
       final product = await getInventoryById(id);
-      
+
       // Delete the image from storage if it exists
       if (product.imageUrl != null && product.imageUrl!.isNotEmpty) {
         try {
@@ -210,16 +213,14 @@ class InventoryService {
           final uri = Uri.parse(product.imageUrl!);
           final segments = uri.pathSegments;
           const bucketName = 'product-images';
-          
+
           final bucketIndex = segments.indexOf(bucketName);
           if (bucketIndex >= 0 && bucketIndex < segments.length - 1) {
             final filePath = segments.sublist(bucketIndex + 1).join('/');
             print('Debug: Deleting image: $filePath');
-            
-            await _supabase.storage
-                .from(bucketName)
-                .remove([filePath]);
-            
+
+            await _supabase.storage.from(bucketName).remove([filePath]);
+
             print('Debug: Image deleted successfully');
           }
         } catch (imageError) {
@@ -231,7 +232,6 @@ class InventoryService {
       // Now delete the inventory item
       await _supabase.from('inventories').delete().eq('id', id);
       print('Debug: Inventory deleted successfully');
-      
     } catch (e) {
       print('Debug: Delete error: $e');
       throw Exception('Failed to delete inventory: $e');
