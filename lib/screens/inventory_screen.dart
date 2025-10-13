@@ -143,370 +143,342 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          'Inventory Management',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: primaryGreen,
-        elevation: 2,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadProducts,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
+    return _isLoading
+        ? const Center(
+            child: CircularProgressIndicator(
+              color: primaryGreen,
+            ),
+          )
+        : _products.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: lightGray.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2_outlined,
+                        size: 80,
+                        color: lightGray,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'No products in inventory',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: darkGray,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Add your first product using the + button',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: lightGray,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: _addProduct,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text(
+                        'Add Product',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryGreen,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () async => _loadProducts(),
                 color: primaryGreen,
-              ),
-            )
-          : _products.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: lightGray.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.inventory_2_outlined,
-                          size: 80,
-                          color: lightGray,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'No products in inventory',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: darkGray,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Add your first product using the + button',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: lightGray,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      ElevatedButton.icon(
-                        onPressed: _addProduct,
-                        icon: const Icon(Icons.add, color: Colors.white),
-                        label: const Text(
-                          'Add Product',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryGreen,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
+                child: Column(
+                  children: [
+                    // Stats Card
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () async => _loadProducts(),
-                  color: primaryGreen,
-                  child: Column(
-                    children: [
-                      // Stats Card
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Total Products',
-                                    style: TextStyle(
-                                      color: lightGray,
-                                      fontSize: 14,
-                                    ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Total Products',
+                                  style: TextStyle(
+                                    color: lightGray,
+                                    fontSize: 14,
                                   ),
-                                  Text(
-                                    '${_products.length}',
-                                    style: const TextStyle(
-                                      color: primaryGreen,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'In Stock',
-                                    style: TextStyle(
-                                      color: lightGray,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${_products.where((p) => p.quantity > 0).length}',
-                                    style: const TextStyle(
-                                      color: primaryGreen,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Out of Stock',
-                                    style: TextStyle(
-                                      color: lightGray,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${_products.where((p) => p.quantity == 0).length}',
-                                    style: const TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Products List
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _products.length,
-                          itemBuilder: (context, index) {
-                            final product = _products[index];
-                            final isOutOfStock = product.quantity == 0;
-
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
-                                leading: Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    color: isOutOfStock
-                                        ? Colors.red.withOpacity(0.1)
-                                        : primaryGreen.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: product.imageUrl != null
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.network(
-                                            product.imageUrl!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Icon(
-                                                Icons.shopping_bag,
-                                                color: isOutOfStock
-                                                    ? Colors.red
-                                                    : primaryGreen,
-                                                size: 30,
-                                              );
-                                            },
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.shopping_bag,
-                                          color: isOutOfStock
-                                              ? Colors.red
-                                              : primaryGreen,
-                                          size: 30,
-                                        ),
                                 ),
-                                title: Text(
-                                  product.name,
+                                Text(
+                                  '${_products.length}',
                                   style: const TextStyle(
+                                    color: primaryGreen,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: darkGray,
-                                    fontSize: 16,
                                   ),
                                 ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${product.category} • ${product.brand}',
-                                      style: const TextStyle(
-                                        color: lightGray,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            'Price: TSH ${product.sellingPrice.toStringAsFixed(2)}',
-                                            style: const TextStyle(
-                                              color: primaryGreen,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 14,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: isOutOfStock
-                                                ? Colors.red.withOpacity(0.1)
-                                                : primaryGreen.withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            '${product.quantity}',
-                                            style: TextStyle(
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'In Stock',
+                                  style: TextStyle(
+                                    color: lightGray,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  '${_products.where((p) => p.quantity > 0).length}',
+                                  style: const TextStyle(
+                                    color: primaryGreen,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Out of Stock',
+                                  style: TextStyle(
+                                    color: lightGray,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  '${_products.where((p) => p.quantity == 0).length}',
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Products List
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _products.length,
+                        itemBuilder: (context, index) {
+                          final product = _products[index];
+                          final isOutOfStock = product.quantity == 0;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              leading: Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: isOutOfStock
+                                      ? Colors.red.withOpacity(0.1)
+                                      : primaryGreen.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: product.imageUrl != null
+                                    ? ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        child: Image.network(
+                                          product.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return Icon(
+                                              Icons.shopping_bag,
                                               color: isOutOfStock
                                                   ? Colors.red
                                                   : primaryGreen,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
+                                              size: 30,
+                                            );
+                                          },
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Sell button - compact version
-                                    if (!isOutOfStock)
-                                      SizedBox(
-                                        width: 60,
-                                        height: 28,
-                                        child: ElevatedButton(
-                                          onPressed: () =>
-                                              _sellProduct(product),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: primaryGreen,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 4),
-                                            textStyle:
-                                                const TextStyle(fontSize: 10),
-                                          ),
-                                          child: const Text('Sell'),
-                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.shopping_bag,
+                                        color: isOutOfStock
+                                            ? Colors.red
+                                            : primaryGreen,
+                                        size: 30,
                                       ),
-                                    const SizedBox(width: 4),
-                                    // More options menu
-                                    PopupMenuButton(
-                                      icon: const Icon(Icons.more_vert,
-                                          color: lightGray, size: 20),
-                                      itemBuilder: (context) => [
-                                        PopupMenuItem(
-                                          child: const Row(
-                                            children: [
-                                              Icon(Icons.edit,
-                                                  color: primaryGreen,
-                                                  size: 20),
-                                              SizedBox(width: 8),
-                                              Text('Edit'),
-                                            ],
-                                          ),
-                                          onTap: () => Future.delayed(
-                                            Duration.zero,
-                                            () => _editProduct(product),
-                                          ),
-                                        ),
-                                        PopupMenuItem(
-                                          child: const Row(
-                                            children: [
-                                              Icon(Icons.delete,
-                                                  color: Colors.red, size: 20),
-                                              SizedBox(width: 8),
-                                              Text('Delete'),
-                                            ],
-                                          ),
-                                          onTap: () => Future.delayed(
-                                            Duration.zero,
-                                            () => _deleteProduct(product),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              ),
+                              title: Text(
+                                product.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: darkGray,
+                                  fontSize: 16,
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${product.category} • ${product.brand}',
+                                    style: const TextStyle(
+                                      color: lightGray,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Price: TSH ${product.sellingPrice.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            color: primaryGreen,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isOutOfStock
+                                              ? Colors.red.withOpacity(0.1)
+                                              : primaryGreen.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          '${product.quantity}',
+                                          style: TextStyle(
+                                            color: isOutOfStock
+                                                ? Colors.red
+                                                : primaryGreen,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Sell button - compact version
+                                  if (!isOutOfStock)
+                                    SizedBox(
+                                      width: 60,
+                                      height: 28,
+                                      child: ElevatedButton(
+                                        onPressed: () =>
+                                            _sellProduct(product),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: primaryGreen,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          textStyle:
+                                              const TextStyle(fontSize: 10),
+                                        ),
+                                        child: const Text('Sell'),
+                                      ),
+                                    ),
+                                  const SizedBox(width: 4),
+                                  // More options menu
+                                  PopupMenuButton(
+                                    icon: const Icon(Icons.more_vert,
+                                        color: lightGray, size: 20),
+                                    itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        child: const Row(
+                                          children: [
+                                            Icon(Icons.edit,
+                                                color: primaryGreen,
+                                                size: 20),
+                                            SizedBox(width: 8),
+                                            Text('Edit'),
+                                          ],
+                                        ),
+                                        onTap: () => Future.delayed(
+                                          Duration.zero,
+                                          () => _editProduct(product),
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        child: const Row(
+                                          children: [
+                                            Icon(Icons.delete,
+                                                color: Colors.red, size: 20),
+                                            SizedBox(width: 8),
+                                            Text('Delete'),
+                                          ],
+                                        ),
+                                        onTap: () => Future.delayed(
+                                          Duration.zero,
+                                          () => _deleteProduct(product),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addProduct,
-        backgroundColor: primaryGreen,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Product'),
-      ),
-    );
+              );
   }
 }

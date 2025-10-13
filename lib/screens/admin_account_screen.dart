@@ -1021,17 +1021,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text('Admin Account Management',
-            style: TextStyle(color: Colors.white)),
-        backgroundColor: primaryGreen,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shadowColor: primaryGreen.withOpacity(0.3),
-      ),
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -1406,7 +1396,6 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

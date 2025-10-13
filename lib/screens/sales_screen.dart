@@ -173,19 +173,7 @@ class _SalesScreenState extends State<SalesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sales History'),
-        backgroundColor: const Color(0xFF1976D2),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadSales,
-          ),
-        ],
-      ),
-      body: _isLoading
+    return _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
               ? Center(
@@ -330,7 +318,6 @@ class _SalesScreenState extends State<SalesScreen> {
                           );
                         },
                       ),
-                    ),
-    );
+                    );
   }
 }

@@ -28,6 +28,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     const AdminAccountScreen(),
   ];
 
+  final List<String> _screenTitles = [
+    'Inventory Management',
+    'Sales Management', 
+    'Reports & Analytics',
+    'Settings & Users',
+  ];
+
   // MEM Technology Color Scheme
   static const Color primaryGreen = Color(0xFF4CAF50);
   static const Color darkGray = Color(0xFF424242);
@@ -86,22 +93,59 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  void _refreshCurrentScreen() {
+    if (_currentIndex == 0) {
+      _loadProducts();
+    } else if (_currentIndex == 1) {
+      // For sales screen, we need to call its refresh method
+      // This will be handled by a key to access the sales screen
+      setState(() {}); // Trigger rebuild for now
+    }
+  }
+
+  List<Widget> _getAppBarActions() {
+    List<Widget> actions = [];
+    
+    // Add screen-specific actions
+    if (_currentIndex == 0 || _currentIndex == 1) { // Inventory or Sales screen
+      actions.add(
+        IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          onPressed: _refreshCurrentScreen,
+          tooltip: _currentIndex == 0 ? 'Refresh Inventory' : 'Refresh Sales',
+        ),
+      );
+    }
+    
+    // Always add logout button
+    actions.add(
+      IconButton(
+        icon: const Icon(Icons.logout, color: Colors.white),
+        onPressed: _logout,
+        tooltip: 'Logout',
+      ),
+    );
+    
+    return actions;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('InventoryMaster - Admin'),
+        title: Text(
+          _screenTitles[_currentIndex],
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         elevation: 4,
         shadowColor: primaryGreen.withOpacity(0.3),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: _logout,
-          ),
-        ],
+        actions: _getAppBarActions(),
       ),
       body: _isLoading
           ? const Center(

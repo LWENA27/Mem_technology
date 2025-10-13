@@ -39,39 +39,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text('Sales Reports',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: primaryGreen,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        shadowColor: primaryGreen.withOpacity(0.3),
-        automaticallyImplyLeading: false, // Remove automatic back button
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadReportData,
-            tooltip: 'Refresh Data',
-          ),
-          IconButton(
-            icon: const Icon(Icons.download, color: Colors.white),
-            onPressed: _reportData != null ? _downloadReport : null,
-            tooltip: 'Download Report',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadReportData,
-        color: primaryGreen,
-        child: _buildBody(),
-      ),
+    return RefreshIndicator(
+      onRefresh: _loadReportData,
+      color: primaryGreen,
+      child: _buildBody(),
     );
   }
 
