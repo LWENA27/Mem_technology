@@ -52,14 +52,9 @@ CREATE POLICY "Users can insert own profile" ON profiles
 CREATE POLICY "Users can update own profile" ON profiles
     FOR UPDATE USING (auth.uid() = id);
 
--- Add a policy to allow users to read profiles in their tenant (for admin operations)
-CREATE POLICY "Users can read tenant profiles" ON profiles
-    FOR SELECT USING (
-        auth.uid() IS NOT NULL AND
-        tenant_id IN (
-            SELECT tenant_id FROM profiles WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
+-- REMOVED: The tenant profiles policy was causing infinite recursion
+-- We'll handle tenant-wide profile access through application logic instead
+-- This is safer and avoids circular dependencies in RLS policies
 
 -- Test the policies work correctly
 DO $$

@@ -392,18 +392,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Text(
-                                          'Price: TSH ${product.sellingPrice.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                            color: primaryGreen,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
+                                        Expanded(
+                                          child: Text(
+                                            'Price: TSH ${product.sellingPrice.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              color: primaryGreen,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        const SizedBox(width: 16),
+                                        const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
+                                            horizontal: 6,
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
@@ -414,7 +417,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                                 BorderRadius.circular(4),
                                           ),
                                           child: Text(
-                                            '${product.quantity} units',
+                                            '${product.quantity}',
                                             style: TextStyle(
                                               color: isOutOfStock
                                                   ? Colors.red
@@ -431,31 +434,29 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Sell button
-                                    ElevatedButton.icon(
-                                      onPressed: isOutOfStock
-                                          ? null
-                                          : () => _sellProduct(product),
-                                      icon: const Icon(Icons.shopping_cart,
-                                          size: 16),
-                                      label: const Text('Sell'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: isOutOfStock
-                                            ? Colors.grey
-                                            : primaryGreen,
-                                        foregroundColor: Colors.white,
-                                        minimumSize: const Size(80, 32),
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
-                                        textStyle:
-                                            const TextStyle(fontSize: 12),
+                                    // Sell button - compact version
+                                    if (!isOutOfStock)
+                                      SizedBox(
+                                        width: 60,
+                                        height: 28,
+                                        child: ElevatedButton(
+                                          onPressed: () => _sellProduct(product),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primaryGreen,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 4),
+                                            textStyle:
+                                                const TextStyle(fontSize: 10),
+                                          ),
+                                          child: const Text('Sell'),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 4),
                                     // More options menu
                                     PopupMenuButton(
                                       icon: const Icon(Icons.more_vert,
-                                          color: lightGray),
+                                          color: lightGray, size: 20),
                                       itemBuilder: (context) => [
                                         PopupMenuItem(
                                           child: const Row(
