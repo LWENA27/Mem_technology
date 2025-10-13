@@ -12,7 +12,8 @@ void main() async {
       anonKey:
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434',
     );
-    print('supabase.supabase_flutter: INFO: ***** Supabase init completed ***** ');
+    print(
+        'supabase.supabase_flutter: INFO: ***** Supabase init completed ***** ');
     runApp(const MyApp());
   } catch (e) {
     runApp(ErrorApp(errorMessage: 'Failed to initialize Supabase: $e'));
@@ -68,9 +69,9 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       // Give a small delay for better UX
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       final session = Supabase.instance.client.auth.currentSession;
-      
+
       if (mounted) {
         if (session != null) {
           print('Active session found, navigating to dashboard');

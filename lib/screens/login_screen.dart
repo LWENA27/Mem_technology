@@ -716,20 +716,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         debugPrint('Tenant created: ${tenantData['id']}');
 
-        // Step 2: Create user profile with tenant reference
-        await supabase.from('profiles').insert({
-          'id': response.user!.id,
-          'email': _emailController.text.trim(),
-          'role': 'admin', // Business owner gets admin role
-          'tenant_id': tenantData['id'],
-        }).timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            throw Exception('Profile creation timed out');
-          },
-        );
+        // Step 2: Create or update user profile with tenant reference
+        // First check if profile already exists
+        final existingProfile = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', response.user!.id)
+            .maybeSingle();
 
-        debugPrint('Profile created successfully with tenant association');
+        if (existingProfile == null) {
+          // Profile doesn't exist, create new one
+          await supabase.from('profiles').insert({
+            'id': response.user!.id,
+            'email': _emailController.text.trim(),
+            'role': 'admin', // Business owner gets admin role
+            'tenant_id': tenantData['id'],
+          }).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Profile creation timed out');
+            },
+          );
+          debugPrint('Profile created successfully with tenant association');
+        } else {
+          // Profile exists, update it with new tenant
+          await supabase.from('profiles').update({
+            'email': _emailController.text.trim(),
+            'role': 'admin',
+            'tenant_id': tenantData['id'],
+          }).eq('id', response.user!.id).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Profile update timed out');
+            },
+          );
+          debugPrint('Profile updated successfully with tenant association');
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -768,6 +790,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         } else if (e.toString().contains('User already registered')) {
           errorMessage +=
               'This email is already registered. Please use a different email or try logging in.';
+        } else if (e.toString().contains('duplicate key value violates unique constraint')) {
+          errorMessage +=
+              'Account already exists. Please try logging in with your email and password instead.';
         } else if (e.toString().contains('Password should be at least')) {
           errorMessage += 'Password must be at least 6 characters long.';
         } else if (e.toString().contains('Invalid email')) {
