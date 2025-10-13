@@ -180,8 +180,60 @@ class InventoryService {
   /// Delete inventory item
   static Future<void> deleteInventory(String id) async {
     try {
+      print('Debug: Attempting to delete inventory: $id');
+      
+      // First check if there are any sales records for this product
+      final salesCheck = await _supabase
+          .from('sales')
+          .select('id')
+          .eq('product_id', id)
+          .limit(1);
+
+      if (salesCheck.isNotEmpty) {
+        print('Debug: Product has sales records, cannot delete');
+        throw Exception(
+          'Cannot delete product: This product has sales records. '
+          'Products with sales history cannot be deleted to maintain data integrity. '
+          'Consider setting quantity to 0 to mark as discontinued instead.'
+        );
+      }
+
+      print('Debug: No sales records found, proceeding with deletion');
+      
+      // Get the product to check if it has an image
+      final product = await getInventoryById(id);
+      
+      // Delete the image from storage if it exists
+      if (product.imageUrl != null && product.imageUrl!.isNotEmpty) {
+        try {
+          // Extract the file path from the URL and delete the image
+          final uri = Uri.parse(product.imageUrl!);
+          final segments = uri.pathSegments;
+          const bucketName = 'product-images';
+          
+          final bucketIndex = segments.indexOf(bucketName);
+          if (bucketIndex >= 0 && bucketIndex < segments.length - 1) {
+            final filePath = segments.sublist(bucketIndex + 1).join('/');
+            print('Debug: Deleting image: $filePath');
+            
+            await _supabase.storage
+                .from(bucketName)
+                .remove([filePath]);
+            
+            print('Debug: Image deleted successfully');
+          }
+        } catch (imageError) {
+          print('Warning: Failed to delete product image: $imageError');
+          // Continue with product deletion even if image deletion fails
+        }
+      }
+
+      // Now delete the inventory item
       await _supabase.from('inventories').delete().eq('id', id);
+      print('Debug: Inventory deleted successfully');
+      
     } catch (e) {
+      print('Debug: Delete error: $e');
       throw Exception('Failed to delete inventory: $e');
     }
   }

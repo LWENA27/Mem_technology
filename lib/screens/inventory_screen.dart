@@ -50,46 +50,85 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   _deleteProduct(Product product) async {
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
+    // Show options dialog for products that might have sales
+    final action = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: Text('Are you sure you want to delete "${product.name}"?'),
+        title: const Text('Remove Product'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('What would you like to do with "${product.name}"?'),
+            const SizedBox(height: 16),
+            const Text(
+              'Note: Products with sales history cannot be permanently deleted.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(context).pop('discontinue'),
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('Mark as Discontinued'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('delete'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('Permanently Delete'),
           ),
         ],
       ),
     );
 
-    if (confirmed == true) {
+    if (action != null) {
       try {
-        await InventoryService.deleteInventory(product.id);
-        _loadProducts();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text('${product.name} deleted successfully'),
-                  ),
-                ],
+        if (action == 'delete') {
+          await InventoryService.deleteInventory(product.id);
+          _loadProducts();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('${product.name} deleted successfully'),
+                    ),
+                  ],
+                ),
+                backgroundColor: primaryGreen,
+                behavior: SnackBarBehavior.floating,
               ),
-              backgroundColor: primaryGreen,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+            );
+          }
+        } else if (action == 'discontinue') {
+          // Set quantity to 0 to mark as discontinued
+          await InventoryService.updateQuantity(product.id, 0);
+          _loadProducts();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('${product.name} marked as discontinued'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.orange,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -100,7 +139,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   const Icon(Icons.error_outline, color: Colors.white),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text('Failed to delete product: $e'),
+                    child: Text('Failed to ${action == 'delete' ? 'delete' : 'discontinue'} product: $e'),
                   ),
                 ],
               ),
