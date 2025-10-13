@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/login_screen.dart';
 import 'screens/admin_dashboard.dart';
+import 'screens/customer_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,18 +80,20 @@ class _SplashScreenState extends State<SplashScreen> {
             MaterialPageRoute(builder: (context) => const AdminDashboard()),
           );
         } else {
-          print('No active session found');
-          // No session, go to login screen
+          print(
+              'No active session found, showing customer view with all products');
+          // No session, show customer view where guests can browse all products
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerView()),
           );
         }
       }
     } catch (e) {
       print('Error checking auth status: $e');
       if (mounted) {
+        // On error, show customer view so users can still browse products
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          MaterialPageRoute(builder: (context) => const CustomerView()),
         );
       }
     }

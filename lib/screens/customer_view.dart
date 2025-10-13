@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../models/product.dart';
-import '../services/DatabaseService.dart';
+import '../services/inventory_service.dart';
 import '../services/supabase_service.dart';
 import 'login_screen.dart';
 
@@ -96,7 +96,7 @@ class _CustomerViewState extends State<CustomerView> {
     setState(() => _isLoading = true);
     try {
       debugPrint('Loading products...');
-      final products = await DatabaseService.instance.getAvailableProducts();
+      final products = await InventoryService.getInventories();
       debugPrint('Products loaded: count = \'${products.length}\'');
       final categories = products.map((p) => p.category).toSet();
       debugPrint('Categories found: $categories');
