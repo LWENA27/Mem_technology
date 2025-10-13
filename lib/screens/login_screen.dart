@@ -255,13 +255,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  _continueAsGuest() {
-    if (mounted) {
-      Navigator.of(context)
-          .pop(true); // Return success to existing CustomerView
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Show loading screen while checking session
@@ -485,30 +478,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                         letterSpacing: 1.1,
                                       ),
                                     ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: OutlinedButton(
-                              onPressed: _continueAsGuest,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: primaryGreen,
-                                side: const BorderSide(
-                                    color: primaryGreen, width: 2),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'CONTINUE AS GUEST',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
                             ),
                           ),
                         ],
