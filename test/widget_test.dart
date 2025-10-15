@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:memtechnology/main.dart';
+import 'package:lwenatech/main.dart';
 
 void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {

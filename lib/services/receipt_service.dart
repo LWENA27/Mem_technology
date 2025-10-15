@@ -7,8 +7,6 @@ import 'package:intl/intl.dart';
 import '../models/sale.dart';
 
 // Platform-specific imports
-import 'dart:io' if (dart.library.html) '';
-import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
 
 class ReceiptService {
   static const String _companyName = 'InventoryMaster';

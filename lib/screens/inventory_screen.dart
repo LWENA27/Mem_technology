@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:memtechnology/services/inventory_service.dart';
-import 'package:memtechnology/models/product.dart';
-import 'package:memtechnology/widgets/add_product_dialog.dart';
-import 'package:memtechnology/widgets/make_sale_dialog.dart';
+import 'package:lwenatech/services/inventory_service.dart';
+import 'package:lwenatech/models/product.dart';
+import 'package:lwenatech/widgets/add_product_dialog.dart';
+import 'package:lwenatech/widgets/make_sale_dialog.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});

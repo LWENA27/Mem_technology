@@ -18,8 +18,9 @@ class InventoryService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       final response = await _supabase
           .from('inventories')
@@ -110,8 +111,9 @@ class InventoryService {
       final tenantId = profile['tenant_id'];
       print('Debug: Tenant ID: $tenantId');
 
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       final inventoryData = {
         'tenant_id': tenantId,
@@ -276,8 +278,9 @@ class InventoryService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       final response = await _supabase
           .from('inventories')

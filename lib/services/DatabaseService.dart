@@ -29,7 +29,7 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'memtechnology_shop.db');
+    final path = join(dbPath, 'lwenatech_shop.db');
     return await openDatabase(
       path,
       version: 1,

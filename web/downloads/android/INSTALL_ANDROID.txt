@@ -1,0 +1,37 @@
+LwenaTech Inventory Management System - Android Edition
+=========================================================
+
+INSTALLATION STEPS:
+1. Download LwenaTech-v1.0.0.apk to your Android device
+2. Go to Settings > Security > Install from Unknown Sources (enable)
+3. Open your file manager and tap the APK file
+4. Tap "Install" and grant necessary permissions
+5. Launch the app from your app drawer
+LwenaTech Inventory Management System - Web Edition
+SYSTEM REQUIREMENTS:
+✅ Android 6.0 (API level 23) or later
+✅ 2GB RAM minimum (4GB recommended)
+✅ 50MB free storage space
+✅ Internet connection for cloud sync
+
+FEATURES:
+📱 Mobile-optimized inventory management
+📷 Camera integration for product photos
+LwenaTech is available on all major platforms. Choose your preferred installation method below:
+🔒 Secure multi-tenant architecture
+📊 Real-time reporting and analytics
+
+PERMISSIONS REQUIRED:
+📷 Camera: For taking product photos
+💾 Storage: For saving images and app data
+🌐 Internet: For cloud synchronization
+📍 Location: For warehouse location tracking (optional)
+
+TROUBLESHOOTING:
+- If installation is blocked, enable "Install from Unknown Sources"
+- Clear app data if experiencing sync issues
+- Restart device if app doesn't appear after installation
+
+    Support: https://github.com/LWENA27/Mem_technology/issues
+Version: 1.0.0
+Build Date: Wed 15 Oct 2025 07:44:46 AM EAT

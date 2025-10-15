@@ -1,0 +1,58 @@
+LwenaTech Inventory Management System - Web Edition
+=====================================================
+
+DEPLOYMENT GUIDE:
+
+QUICK DEPLOY (Recommended):
+1. Upload all files to your web hosting service
+2. Configure your server to serve index.html for all routes
+3. Ensure HTTPS is enabled (required for camera features)
+4. Access your deployed app via your domain
+
+HOSTING OPTIONS:
+
+📡 Static Hosting Services:
+   • Netlify: Drag & drop this folder to netlify.com/drop
+   • Vercel: Import from GitHub or upload folder
+   • GitHub Pages: Push to gh-pages branch
+   • Firebase Hosting: firebase deploy
+   • AWS S3: Upload with static website hosting
+
+🖥️ Traditional Web Servers:
+   • Apache: Place files in document root, configure routing
+   • Nginx: Configure try_files directive for SPA routing
+   • IIS: Configure URL rewrite rules
+
+SERVER CONFIGURATION:
+For proper routing, configure your server to serve index.html for all routes:
+
+Apache (.htaccess):
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+
+Nginx:
+location / {
+    try_files $uri $uri/ /index.html;
+}
+
+REQUIREMENTS:
+✅ Modern web browser (Chrome 80+, Firefox 75+, Safari 13+)
+✅ HTTPS enabled (required for camera/microphone access)
+✅ Internet connection for backend services
+
+FEATURES:
+🌐 Progressive Web App (PWA) capabilities
+📱 Responsive design for all devices
+⚡ Fast loading with service worker caching
+🔒 Secure authentication and data encryption
+📊 Real-time inventory synchronization
+
+Performance Tips:
+- Enable gzip compression on your server
+- Configure browser caching headers
+- Use a CDN for better global performance
+
+Version: 1.0.0
+Build Date: Wed 15 Oct 2025 07:46:29 AM EAT

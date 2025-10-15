@@ -24,7 +24,7 @@ class ImageUploadService {
       }
 
       // Generate unique filename
-      final uuid = const Uuid();
+      const uuid = Uuid();
       final fileExtension = imageFile.path.split('.').last.toLowerCase();
       final fileName = '${uuid.v4()}.$fileExtension';
       final filePath = 'products/$fileName';
@@ -211,7 +211,7 @@ class ImageUploadService {
         print('Debug: Creating storage bucket: $_bucketName');
         await _supabase.storage.createBucket(
           _bucketName,
-          BucketOptions(
+          const BucketOptions(
             public: true,
             allowedMimeTypes: [
               'image/jpeg',

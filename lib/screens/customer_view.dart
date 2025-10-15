@@ -7,6 +7,7 @@ import '../models/product.dart';
 import '../services/inventory_service.dart';
 import '../services/supabase_service.dart';
 import 'login_screen.dart';
+import 'settings_screen.dart';
 
 class CustomerView extends StatefulWidget {
   const CustomerView({super.key});
@@ -135,7 +136,7 @@ class _CustomerViewState extends State<CustomerView> {
   }
 
   _callOwner() async {
-    const phoneNumber = 'tel:+255745263981';
+    const phoneNumber = 'tel:+255692240929';
     if (await canLaunchUrl(Uri.parse(phoneNumber))) {
       await launchUrl(Uri.parse(phoneNumber));
     } else {
@@ -149,7 +150,7 @@ class _CustomerViewState extends State<CustomerView> {
   }
 
   _sendWhatsAppMessage() async {
-    const phoneNumber = '+255745263981';
+    const phoneNumber = '+255692240929';
     const message = 'Hello! Im interested in your products. Can you assist me?';
     final url =
         'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
@@ -175,6 +176,12 @@ class _CustomerViewState extends State<CustomerView> {
       debugPrint('Login successful, reloading products...');
       await _loadProducts();
     }
+  }
+
+  _navigateToSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    );
   }
 
   Widget _buildProductImage(Product product) {
@@ -283,6 +290,11 @@ class _CustomerViewState extends State<CustomerView> {
             color: const Color(0xFF25D366),
             onPressed: _sendWhatsAppMessage,
             tooltip: 'WhatsApp',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: 'Settings & Downloads',
           ),
           IconButton(
             icon: Icon(SupabaseService.instance.isAuthenticated()
@@ -517,13 +529,7 @@ class _CustomerViewState extends State<CustomerView> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _callOwner,
-        backgroundColor: primaryGreen,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        child: const Icon(Icons.phone),
-      ),
+      // floatingActionButton removed per design (call button hidden)
     );
   }
 }

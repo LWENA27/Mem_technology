@@ -25,8 +25,9 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       final totalPrice = quantity * unitPrice;
       final saleDate = DateTime.now().toIso8601String();
@@ -87,8 +88,9 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       final response = await _supabase
           .from('sales')
@@ -115,8 +117,9 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       final response = await _supabase
           .from('sales')
@@ -146,8 +149,9 @@ class SalesService {
           .single();
 
       final tenantId = profile['tenant_id'];
-      if (tenantId == null)
+      if (tenantId == null) {
         throw Exception('User not associated with a tenant');
+      }
 
       var query = _supabase
           .from('sales')

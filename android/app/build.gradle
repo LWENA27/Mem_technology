@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace "com.example.memtechnology"
+    namespace "com.lwenatech.inventorymaster"
     compileSdk flutter.compileSdkVersion
     ndkVersion "27.0.12077973"
 
@@ -23,11 +23,12 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.memtechnology"
-        minSdk flutter.minSdkVersion
-        targetSdk flutter.targetSdkVersion
-        versionCode flutter.versionCode
-        versionName flutter.versionName
+    applicationId "com.lwenatech.inventorymaster"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+        multiDexEnabled true
     }
 
     buildTypes {

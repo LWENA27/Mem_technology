@@ -31,8 +31,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  List<File> _selectedImages = [];
-  List<XFile> _selectedImageFiles = [];
+  final List<File> _selectedImages = [];
+  final List<XFile> _selectedImageFiles = [];
   List<String> _currentImageUrls = [];
   bool _isLoading = false;
   bool _isUploading = false;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:memtechnology/services/inventory_service.dart';
-import 'package:memtechnology/models/product.dart';
-import 'package:memtechnology/widgets/add_product_dialog.dart';
-import 'package:memtechnology/screens/inventory_screen.dart';
+import 'package:lwenatech/services/inventory_service.dart';
+import 'package:lwenatech/models/product.dart';
+import 'package:lwenatech/widgets/add_product_dialog.dart';
+import 'package:lwenatech/screens/inventory_screen.dart';
 import 'sales_screen.dart';
 import 'reports_screen.dart';
 import 'admin_account_screen.dart';
