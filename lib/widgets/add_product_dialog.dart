@@ -38,6 +38,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   List<String> _currentImageUrls = [];
   bool _isLoading = false;
   bool _isUploading = false;
+  bool _visibleToCustomers = true; // Default to visible
 
   final ImagePicker _picker = ImagePicker();
 
@@ -77,6 +78,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
     _quantityController.text = product.quantity.toString();
     _descriptionController.text = product.description ?? '';
     _currentImageUrls = List.from(product.imageUrls);
+    _visibleToCustomers = product.visibleToCustomers; // Populate visibility
   }
 
   Future<void> _pickImages() async {
@@ -316,6 +318,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               description: _descriptionController.text.trim().isEmpty
                   ? null
                   : _descriptionController.text.trim(),
+              imageUrl: allImageUrls.isNotEmpty ? allImageUrls.first : null,
               imageUrls: allImageUrls,
             );
             print('Debug: Product added with ID: $productId');
@@ -368,7 +371,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
               description: _descriptionController.text.trim().isEmpty
                   ? null
                   : _descriptionController.text.trim(),
+              imageUrl: allImageUrls.isNotEmpty ? allImageUrls.first : null,
               imageUrls: allImageUrls,
+              visibleToCustomers: _visibleToCustomers,
             );
             _showSuccessMessage('Product updated successfully!');
           } catch (e) {
@@ -777,6 +782,65 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 12),
+
+                // Visibility Toggle for Customers
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _visibleToCustomers 
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _visibleToCustomers 
+                        ? Colors.green.withOpacity(0.3)
+                        : Colors.orange.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _visibleToCustomers ? Icons.visibility : Icons.visibility_off,
+                        color: _visibleToCustomers ? Colors.green : Colors.orange,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Visible to Customers',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _visibleToCustomers ? Colors.green : Colors.orange,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _visibleToCustomers
+                                  ? 'Customers can see this product in your storefront'
+                                  : 'This product is hidden from customers',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _visibleToCustomers,
+                        onChanged: (value) {
+                          setState(() {
+                            _visibleToCustomers = value;
+                          });
+                        },
+                        activeColor: Colors.green,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
 

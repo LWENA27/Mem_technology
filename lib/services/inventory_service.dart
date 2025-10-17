@@ -33,35 +33,29 @@ class InventoryService {
     try {
       print('Debug: Loading public inventories for guest users');
 
-      // Get ALL inventories from ALL tenants (for now, to fix the visibility issue)
-      // Later you can filter by public_storefront = true if needed
-      final response =
-          await _supabase.from('inventories').select('*').order('name');
+      // Get only visible products from tenants with public storefronts enabled
+      final response = await _supabase
+          .from('inventories')
+          .select('''
+            *,
+            tenants!inner(
+              show_products_to_customers
+            )
+          ''')
+          .eq('visible_to_customers', true)
+          .eq('tenants.show_products_to_customers', true)
+          .order('name');
 
-      print('Debug: Found ${response.length} total products (all tenants)');
+      print('Debug: Found ${response.length} visible products');
 
       final products = response
           .map<Product>((item) => Product.fromInventoryJson(item))
           .toList();
 
-      // If no products found, log more debug info
-      if (products.isEmpty) {
-        print('Debug: No products found in any tenant');
-
-        // Check if tenants exist
-        final tenants = await _supabase.from('tenants').select('*');
-        print('Debug: Found ${tenants.length} tenants total');
-
-        for (final tenant in tenants) {
-          print(
-              'Debug: Tenant ${tenant['name']} (${tenant['id']}) - public: ${tenant['public_storefront']}');
-        }
-      }
-
       return products;
     } catch (e) {
       print('Debug: Error loading public inventories: $e');
-      throw Exception('Failed to load public inventories: $e');
+      throw Exception('Failed to load public products: $e');
     }
   }
 
@@ -113,6 +107,7 @@ class InventoryService {
         'brand': brand,
         'description': description ?? '',
         'image_url': imageUrl,
+        'visible_to_customers': true, // Default new products to visible
         'metadata': {
           'image_urls': imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         },
@@ -146,6 +141,7 @@ class InventoryService {
     String? sku,
     String? imageUrl,
     List<String>? imageUrls,
+    bool? visibleToCustomers,
   }) async {
     try {
       final user = _supabase.auth.currentUser;
@@ -169,9 +165,35 @@ class InventoryService {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
+      // Only update visibility if explicitly provided
+      if (visibleToCustomers != null) {
+        inventoryData['visible_to_customers'] = visibleToCustomers;
+      }
+
       await _supabase.from('inventories').update(inventoryData).eq('id', id);
     } catch (e) {
       throw Exception('Failed to update inventory: $e');
+    }
+  }
+
+  /// Update product visibility for customers
+  static Future<void> updateProductVisibility(String productId, bool visible) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await _supabase
+          .from('inventories')
+          .update({
+            'visible_to_customers': visible,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', productId);
+
+      print('Debug: Updated product $productId visibility to $visible');
+    } catch (e) {
+      print('Debug: Error updating product visibility: $e');
+      throw Exception('Failed to update product visibility: $e');
     }
   }
 

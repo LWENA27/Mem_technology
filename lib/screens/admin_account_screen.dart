@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../services/supabase_service.dart';
+import 'storefront_settings_screen.dart';
 
 enum MessageType { success, error, info }
 
@@ -1259,6 +1260,61 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       ),
                     ],
                   ),
+                ),
+              ),
+            ],
+          ),
+
+          // Storefront Settings Section
+          _buildExpandableSection(
+            'Storefront Settings',
+            Icons.storefront,
+            [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: primaryGreen.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.store, color: primaryGreen),
+                        SizedBox(width: 8),
+                        Text(
+                          'Customer Storefront Management',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: primaryGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Control how customers see your products and manage global storefront settings.',
+                      style: TextStyle(
+                        color: darkGray,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildStyledButton(
+                      text: 'Manage Storefront Settings',
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const StorefrontSettingsScreen(),
+                          ),
+                        );
+                      },
+                      icon: Icons.settings,
+                      backgroundColor: primaryGreen,
+                    ),
+                  ],
                 ),
               ),
             ],

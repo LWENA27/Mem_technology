@@ -107,51 +107,77 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (action != null) {
       try {
         if (action == 'delete') {
-          final success = await _productRepository.deleteProduct(product.id);
-          if (success) {
-            _loadProducts();
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text('${product.name} deleted successfully'),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: primaryGreen,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+          // Use platform-aware deletion
+          if (kIsWeb) {
+            // Web: Use InventoryService (Supabase directly)
+            await InventoryService.deleteInventory(product.id);
+          } else {
+            // Native: Use ProductRepository (offline-first)
+            final success = await _productRepository.deleteProduct(product.id);
+            if (!success) {
+              throw Exception('Failed to delete product');
             }
+          }
+          
+          _loadProducts();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('${product.name} deleted successfully'),
+                    ),
+                  ],
+                ),
+                backgroundColor: primaryGreen,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
         } else if (action == 'discontinue') {
           // Set quantity to 0 to mark as discontinued
-          final productData = {'quantity': 0};
-          final success =
-              await _productRepository.updateProduct(product.id, productData);
-          if (success) {
-            _loadProducts();
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text('${product.name} marked as discontinued'),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: Colors.orange,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+          if (kIsWeb) {
+            // Web: Use InventoryService
+            await InventoryService.updateInventory(
+              id: product.id,
+              name: product.name,
+              category: product.category,
+              brand: product.brand,
+              price: product.sellingPrice,
+              buyingPrice: product.buyingPrice,
+              quantity: 0, // Mark as discontinued
+              description: product.description,
+              imageUrl: product.imageUrl,
+            );
+          } else {
+            // Native: Use ProductRepository
+            final productData = {'quantity': 0};
+            final success = await _productRepository.updateProduct(product.id, productData);
+            if (!success) {
+              throw Exception('Failed to discontinue product');
             }
+          }
+          
+          _loadProducts();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('${product.name} marked as discontinued'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.orange,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
         }
       } catch (e) {

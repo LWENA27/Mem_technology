@@ -4,12 +4,15 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   // Production Supabase Configuration
   // IMPORTANT: Replace these with your actual production values
-  static const String _prodSupabaseUrl = 'https://kzjgdeqfmxkmpmadtbpb.supabase.co';
-  static const String _prodSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434';
-  
+  static const String _prodSupabaseUrl =
+      'https://kzjgdeqfmxkmpmadtbpb.supabase.co';
+  static const String _prodSupabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434';
+
   // Development Supabase Configuration (local)
   static const String _devSupabaseUrl = 'http://127.0.0.1:54321';
-  static const String _devSupabaseAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+  static const String _devSupabaseAnonKey =
+      'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 
   /// Get the appropriate Supabase URL for the current environment
   static String get supabaseUrl {
@@ -50,18 +53,19 @@ class AppConfig {
   static const int maxFileSize = 10 * 1024 * 1024; // 10MB
   static const List<String> allowedImageTypes = [
     'image/jpeg',
-    'image/png', 
+    'image/png',
     'image/gif',
     'image/webp'
   ];
 
   /// Support configuration
   static const String supportEmail = 'adamlwena22@gmail.com';
-  static const String supportWhatsApp = 'https://chat.whatsapp.com/B8RUxQsQM665hjVm3Z05lc?mode=ems_share_t';
+  static const String supportWhatsApp =
+      'https://chat.whatsapp.com/B8RUxQsQM665hjVm3Z05lc?mode=ems_share_t';
 
   /// Super Admin configuration
   static const String superAdminEmail = 'adamlwena22@gmail.com';
-  
+
   /// Get environment name for display
   static String get environmentName {
     if (isProduction) return 'Production';

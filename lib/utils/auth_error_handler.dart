@@ -2,109 +2,108 @@ import 'package:flutter/material.dart';
 
 /// Enhanced user-friendly error handler for authentication
 class AuthErrorHandler {
-  
   /// Convert technical Supabase errors to user-friendly messages
   static String getUserFriendlyMessage(dynamic error) {
     final errorString = error.toString().toLowerCase();
-    
+
     // Check for common authentication errors
-    if (errorString.contains('invalid login credentials') || 
+    if (errorString.contains('invalid login credentials') ||
         errorString.contains('invalid_credentials') ||
         errorString.contains('invalid email or password')) {
       return 'Incorrect email or password. Please try again.';
     }
-    
+
     if (errorString.contains('email not confirmed')) {
       return 'Please check your email and confirm your account before logging in.';
     }
-    
+
     if (errorString.contains('user already registered') ||
-        errorString.contains('duplicate key value violates unique constraint')) {
+        errorString
+            .contains('duplicate key value violates unique constraint')) {
       return 'This email is already registered. Please try logging in instead.';
     }
-    
+
     if (errorString.contains('password should be at least')) {
       return 'Password must be at least 6 characters long.';
     }
-    
+
     if (errorString.contains('email_address_invalid') ||
         errorString.contains('invalid email')) {
       return 'Please enter a valid email address.';
     }
-    
-    if (errorString.contains('too many requests') || 
+
+    if (errorString.contains('too many requests') ||
         errorString.contains('rate limit')) {
       return 'Too many attempts. Please wait a moment and try again.';
     }
-    
-    if (errorString.contains('network') || 
+
+    if (errorString.contains('network') ||
         errorString.contains('connection') ||
         errorString.contains('timeout')) {
       return 'Connection problem. Please check your internet and try again.';
     }
-    
+
     if (errorString.contains('user not found')) {
       return 'No account found with this email. Please register first.';
     }
-    
+
     if (errorString.contains('signup disabled')) {
       return 'New registrations are currently disabled. Please contact support.';
     }
-    
-    if (errorString.contains('database') || 
+
+    if (errorString.contains('database') ||
         errorString.contains('postgres') ||
         errorString.contains('row-level security policy')) {
       return 'System temporarily unavailable. Please try again in a moment.';
     }
-    
+
     if (errorString.contains('authentication failed after user creation') ||
-        errorString.contains('registration completed but automatic login failed')) {
+        errorString
+            .contains('registration completed but automatic login failed')) {
       return 'Account created successfully! Please try logging in with your credentials.';
     }
-    
+
     // Default for unknown errors
     return 'Something went wrong. Please try again or contact support.';
   }
-  
+
   /// Get appropriate icon for error type
   static IconData getErrorIcon(dynamic error) {
     final errorString = error.toString().toLowerCase();
-    
-    if (errorString.contains('invalid login credentials') || 
+
+    if (errorString.contains('invalid login credentials') ||
         errorString.contains('invalid_credentials')) {
       return Icons.lock_outline;
     }
-    
+
     if (errorString.contains('email not confirmed')) {
       return Icons.email_outlined;
     }
-    
-    if (errorString.contains('network') || 
-        errorString.contains('connection')) {
+
+    if (errorString.contains('network') || errorString.contains('connection')) {
       return Icons.wifi_off;
     }
-    
+
     if (errorString.contains('user not found')) {
       return Icons.person_search;
     }
-    
+
     return Icons.error_outline;
   }
-  
+
   /// Get color for error type
   static Color getErrorColor(dynamic error) {
     final errorString = error.toString().toLowerCase();
-    
-    if (errorString.contains('invalid login credentials') || 
+
+    if (errorString.contains('invalid login credentials') ||
         errorString.contains('invalid_credentials')) {
       return Colors.amber; // Warning color for wrong credentials
     }
-    
-    if (errorString.contains('network') || 
-        errorString.contains('connection')) {
+
+    if (errorString.contains('network') || errorString.contains('connection')) {
       return Colors.blue; // Info color for network issues
     }
-    
+
     return Colors.red; // Default error color
   }
 }
@@ -143,7 +142,7 @@ class _AuthErrorWidgetState extends State<AuthErrorWidget>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -151,7 +150,7 @@ class _AuthErrorWidgetState extends State<AuthErrorWidget>
       parent: _controller,
       curve: Curves.elasticOut,
     ));
-    
+
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -159,7 +158,7 @@ class _AuthErrorWidgetState extends State<AuthErrorWidget>
       parent: _controller,
       curve: Curves.easeIn,
     ));
-    
+
     _controller.forward();
   }
 
@@ -282,7 +281,7 @@ class _AuthSuccessWidgetState extends State<AuthSuccessWidget>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -290,7 +289,7 @@ class _AuthSuccessWidgetState extends State<AuthSuccessWidget>
       parent: _controller,
       curve: Curves.bounceOut,
     ));
-    
+
     _controller.forward();
   }
 

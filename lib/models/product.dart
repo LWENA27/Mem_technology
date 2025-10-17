@@ -12,6 +12,7 @@ class Product {
   final String? imageUrl; // Keep for backward compatibility
   final List<String> imageUrls; // New field for multiple images
   final DateTime dateAdded;
+  final bool visibleToCustomers; // New visibility field
 
   Product({
     String? id, // Accepts nullable, but ensures a value
@@ -25,6 +26,7 @@ class Product {
     this.imageUrl,
     List<String>? imageUrls,
     required this.dateAdded,
+    this.visibleToCustomers = true, // Default to visible
   })  : id = (id == null || id.isEmpty) ? const Uuid().v4() : id,
         imageUrls = imageUrls ?? (imageUrl != null ? [imageUrl] : []);
 
@@ -39,6 +41,7 @@ class Product {
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       description: json['description'] as String?,
       imageUrl: json['image_url'] as String?,
+      visibleToCustomers: json['visible_to_customers'] as bool? ?? true,
       dateAdded: json['date_added'] != null
           ? DateTime.parse(json['date_added'] as String)
           : DateTime.now(),
@@ -70,6 +73,7 @@ class Product {
           metadata['description'] as String?,
       imageUrl:
           (json['image_url'] as String?) ?? (metadata['image_url'] as String?),
+      visibleToCustomers: json['visible_to_customers'] as bool? ?? true,
       imageUrls: Product._parseImageUrls(metadata),
       dateAdded: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
@@ -88,6 +92,7 @@ class Product {
         'description': description,
         'image_url': imageUrl,
         'image_urls': imageUrls,
+        'visible_to_customers': visibleToCustomers,
         'date_added': dateAdded.toIso8601String(),
       };
 

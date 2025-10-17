@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       _checkLoginStatus();
     });
-    
+
     // Clear errors when user starts typing
     _emailController.addListener(_clearErrorsOnTyping);
     _passwordController.addListener(_clearErrorsOnTyping);
@@ -457,8 +457,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 12),
                             AuthErrorWidget(
                               message: _errorMessage!,
-                              icon: AuthErrorHandler.getErrorIcon(_errorMessage!),
-                              color: AuthErrorHandler.getErrorColor(_errorMessage!),
+                              icon:
+                                  AuthErrorHandler.getErrorIcon(_errorMessage!),
+                              color: AuthErrorHandler.getErrorColor(
+                                  _errorMessage!),
                               onRetry: () {
                                 setState(() {
                                   _errorMessage = null;
@@ -793,7 +795,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       debugPrint('Registration error: $e');
       if (mounted) {
-        setState(() => _errorMessage = AuthErrorHandler.getUserFriendlyMessage(e));
+        setState(
+            () => _errorMessage = AuthErrorHandler.getUserFriendlyMessage(e));
       }
     } finally {
       if (mounted) {
@@ -1060,8 +1063,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 12),
                             AuthErrorWidget(
                               message: _errorMessage!,
-                              icon: AuthErrorHandler.getErrorIcon(_errorMessage!),
-                              color: AuthErrorHandler.getErrorColor(_errorMessage!),
+                              icon:
+                                  AuthErrorHandler.getErrorIcon(_errorMessage!),
+                              color: AuthErrorHandler.getErrorColor(
+                                  _errorMessage!),
                               onRetry: () {
                                 setState(() {
                                   _errorMessage = null;
