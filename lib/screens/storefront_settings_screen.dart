@@ -6,7 +6,8 @@ class StorefrontSettingsScreen extends StatefulWidget {
   const StorefrontSettingsScreen({super.key});
 
   @override
-  State<StorefrontSettingsScreen> createState() => _StorefrontSettingsScreenState();
+  State<StorefrontSettingsScreen> createState() =>
+      _StorefrontSettingsScreenState();
 }
 
 class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
@@ -31,7 +32,7 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
       setState(() => _isLoading = true);
 
       final settings = await SettingsService.getTenantSettings();
-      
+
       setState(() {
         _storefrontVisible = settings['showProductsToCustomers'] ?? true;
         _businessName = settings['name'] ?? 'Unknown Business';
@@ -52,7 +53,7 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
   Future<void> _updateStorefrontVisibility(bool visible) async {
     try {
       await SettingsService.updateStorefrontVisibility(visible);
-      
+
       setState(() {
         _storefrontVisible = visible;
       });
@@ -60,9 +61,9 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
       if (mounted) {
         EnhancedFeedbackWidget.showSuccessSnackBar(
           context,
-          visible 
-            ? 'Storefront is now visible to customers'
-            : 'Storefront is now hidden from customers',
+          visible
+              ? 'Storefront is now visible to customers'
+              : 'Storefront is now hidden from customers',
         );
       }
     } catch (e) {
@@ -81,7 +82,7 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
 
     try {
       await SettingsService.updateBusinessName(newName);
-      
+
       setState(() {
         _businessName = newName;
       });
@@ -132,10 +133,13 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 'Business Information',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: darkGray,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: darkGray,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
@@ -168,7 +172,7 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
 
                   // Storefront Visibility Section
@@ -184,45 +188,55 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 'Global Storefront Settings',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: darkGray,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: darkGray,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Storefront Visibility Toggle
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: _storefrontVisible 
-                                ? primaryGreen.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
+                              color: _storefrontVisible
+                                  ? primaryGreen.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: _storefrontVisible 
-                                  ? primaryGreen.withOpacity(0.3)
-                                  : Colors.red.withOpacity(0.3),
+                                color: _storefrontVisible
+                                    ? primaryGreen.withOpacity(0.3)
+                                    : Colors.red.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
-                                  _storefrontVisible ? Icons.visibility : Icons.visibility_off,
-                                  color: _storefrontVisible ? primaryGreen : Colors.red,
+                                  _storefrontVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: _storefrontVisible
+                                      ? primaryGreen
+                                      : Colors.red,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Show Products to Customers',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: _storefrontVisible ? primaryGreen : Colors.red,
+                                          color: _storefrontVisible
+                                              ? primaryGreen
+                                              : Colors.red,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -230,7 +244,7 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
                                         _storefrontVisible
                                             ? 'Your storefront is visible to customers. They can browse and view your products.'
                                             : 'Your storefront is hidden from customers. No products will be visible to them.',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           color: lightGray,
                                         ),
@@ -246,33 +260,35 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Information Box
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.blue.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                              border: Border.all(
+                                  color: Colors.blue.withOpacity(0.3)),
                             ),
-                            child: Row(
+                            child: const Row(
                               children: [
-                                const Icon(Icons.info_outline, color: Colors.blue),
-                                const SizedBox(width: 12),
+                                Icon(Icons.info_outline, color: Colors.blue),
+                                SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'How Visibility Works',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.blue,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      SizedBox(height: 4),
                                       Text(
                                         '• Global setting: Controls whether ANY products are visible\n'
                                         '• Individual product visibility: Each product can be hidden/shown separately\n'
@@ -308,37 +324,43 @@ class _StorefrontSettingsScreenState extends State<StorefrontSettingsScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 'Additional Settings',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: darkGray,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: darkGray,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          
                           ListTile(
-                            leading: const Icon(Icons.language, color: lightGray),
+                            leading:
+                                const Icon(Icons.language, color: lightGray),
                             title: const Text('Currency & Region'),
                             subtitle: const Text('TSH (Tanzanian Shilling)'),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
                               // Future: Currency settings
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Currency settings coming soon'),
+                                  content:
+                                      Text('Currency settings coming soon'),
                                 ),
                               );
                             },
                           ),
-                          
                           const Divider(),
-                          
                           ListTile(
-                            leading: const Icon(Icons.palette, color: lightGray),
+                            leading:
+                                const Icon(Icons.palette, color: lightGray),
                             title: const Text('Theme & Branding'),
-                            subtitle: const Text('Customize your storefront appearance'),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            subtitle: const Text(
+                                'Customize your storefront appearance'),
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
                               // Future: Theme settings
                               ScaffoldMessenger.of(context).showSnackBar(

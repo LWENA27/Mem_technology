@@ -789,21 +789,24 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _visibleToCustomers 
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.orange.withOpacity(0.1),
+                    color: _visibleToCustomers
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: _visibleToCustomers 
-                        ? Colors.green.withOpacity(0.3)
-                        : Colors.orange.withOpacity(0.3),
+                      color: _visibleToCustomers
+                          ? Colors.green.withOpacity(0.3)
+                          : Colors.orange.withOpacity(0.3),
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        _visibleToCustomers ? Icons.visibility : Icons.visibility_off,
-                        color: _visibleToCustomers ? Colors.green : Colors.orange,
+                        _visibleToCustomers
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color:
+                            _visibleToCustomers ? Colors.green : Colors.orange,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -814,7 +817,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
                               'Visible to Customers',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: _visibleToCustomers ? Colors.green : Colors.orange,
+                                color: _visibleToCustomers
+                                    ? Colors.green
+                                    : Colors.orange,
                               ),
                             ),
                             const SizedBox(height: 2),

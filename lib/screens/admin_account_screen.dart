@@ -1307,7 +1307,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const StorefrontSettingsScreen(),
+                            builder: (context) =>
+                                const StorefrontSettingsScreen(),
                           ),
                         );
                       },

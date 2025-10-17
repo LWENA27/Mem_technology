@@ -77,10 +77,10 @@ class AppConfig {
   static void printConfig() {
     if (!kReleaseMode) {
       print('=== LwenaTech Configuration ===');
-      print('Environment: ${environmentName}');
-      print('Supabase URL: ${supabaseUrl}');
-      print('App Version: ${appVersion}');
-      print('Currency: ${defaultCurrency}');
+      print('Environment: $environmentName');
+      print('Supabase URL: $supabaseUrl');
+      print('App Version: $appVersion');
+      print('Currency: $defaultCurrency');
       print('================================');
     }
   }

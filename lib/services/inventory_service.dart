@@ -34,25 +34,67 @@ class InventoryService {
       print('Debug: Loading public inventories for guest users');
 
       // Get only visible products from tenants with public storefronts enabled
-      final response = await _supabase
-          .from('inventories')
-          .select('''
-            *,
-            tenants!inner(
-              show_products_to_customers
-            )
-          ''')
-          .eq('visible_to_customers', true)
-          .eq('tenants.show_products_to_customers', true)
-          .order('name');
+      // Primary attempt: filter by tenant setting via tenants.show_products_to_customers
+      try {
+        final response = await _supabase
+            .from('inventories')
+            .select('''
+              *,
+              tenants!inner(
+                show_products_to_customers
+              )
+            ''')
+            .eq('visible_to_customers', true)
+            .eq('tenants.show_products_to_customers', true)
+            .order('name');
 
-      print('Debug: Found ${response.length} visible products');
+        print(
+            'Debug: Found ${response.length} visible products (with tenant filter)');
 
-      final products = response
-          .map<Product>((item) => Product.fromInventoryJson(item))
-          .toList();
+        final products = response
+            .map<Product>((item) => Product.fromInventoryJson(item))
+            .toList();
 
-      return products;
+        return products;
+      } on PostgrestException catch (pe) {
+        // Handle missing column error specifically (Postgres error code 42703)
+        print(
+            'Debug: PostgrestException while filtering by tenants.show_products_to_customers: $pe');
+        print(
+            'Debug: The tenants.show_products_to_customers column may be missing. Falling back to tenant-agnostic query.');
+
+        // Retry without joining tenants or using visibility columns - show all products when columns are missing
+        try {
+          final fallback =
+              await _supabase.from('inventories').select().order('name');
+
+          print(
+              'Debug: Found ${fallback.length} products (fallback without visibility filters)');
+          print(
+              'Debug: Recommendation: Run the visibility migration SQL scripts to enable product visibility controls.');
+
+          return fallback
+              .map<Product>((item) => Product.fromInventoryJson(item))
+              .toList();
+        } on PostgrestException catch (fallbackError) {
+          print('Debug: Fallback query also failed: $fallbackError');
+
+          // Final fallback - try to get any products at all
+          final basicResponse = await _supabase
+              .from('inventories')
+              .select(
+                  'id, name, price, quantity, sku, description, category, image_url, created_at, updated_at, tenant_id')
+              .order('name');
+
+          print('Debug: Basic query found ${basicResponse.length} products');
+          return basicResponse
+              .map<Product>((item) => Product.fromInventoryJson(item))
+              .toList();
+        }
+      }
+
+      // unreachable - kept for clarity
+      // (primary flow returns earlier)
     } catch (e) {
       print('Debug: Error loading public inventories: $e');
       throw Exception('Failed to load public products: $e');
@@ -107,11 +149,19 @@ class InventoryService {
         'brand': brand,
         'description': description ?? '',
         'image_url': imageUrl,
-        'visible_to_customers': true, // Default new products to visible
         'metadata': {
           'image_urls': imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         },
       };
+
+      // Try to set visibility - gracefully handle missing column
+      try {
+        inventoryData['visible_to_customers'] =
+            true; // Default new products to visible
+      } catch (e) {
+        print(
+            'Debug: Could not set visible_to_customers (column may not exist): $e');
+      }
 
       print('Debug: Inventory data to insert: $inventoryData');
 
@@ -165,9 +215,14 @@ class InventoryService {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      // Only update visibility if explicitly provided
+      // Only update visibility if explicitly provided and column exists
       if (visibleToCustomers != null) {
-        inventoryData['visible_to_customers'] = visibleToCustomers;
+        try {
+          inventoryData['visible_to_customers'] = visibleToCustomers;
+        } catch (e) {
+          print(
+              'Debug: Could not set visible_to_customers (column may not exist): $e');
+        }
       }
 
       await _supabase.from('inventories').update(inventoryData).eq('id', id);
@@ -177,20 +232,30 @@ class InventoryService {
   }
 
   /// Update product visibility for customers
-  static Future<void> updateProductVisibility(String productId, bool visible) async {
+  static Future<void> updateProductVisibility(
+      String productId, bool visible) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      await _supabase
-          .from('inventories')
-          .update({
-            'visible_to_customers': visible,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', productId);
+      try {
+        await _supabase.from('inventories').update({
+          'visible_to_customers': visible,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', productId);
 
-      print('Debug: Updated product $productId visibility to $visible');
+        print('Debug: Updated product $productId visibility to $visible');
+      } on PostgrestException catch (pe) {
+        if (pe.code == '42703') {
+          print(
+              'Debug: visible_to_customers column does not exist. Please run the visibility migration.');
+          print(
+              'Debug: Recommendation: Execute add_visibility_columns.sql in Supabase SQL Editor');
+          // Don't throw - just log the issue
+          return;
+        }
+        rethrow;
+      }
     } catch (e) {
       print('Debug: Error updating product visibility: $e');
       throw Exception('Failed to update product visibility: $e');

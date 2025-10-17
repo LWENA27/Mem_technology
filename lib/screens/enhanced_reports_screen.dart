@@ -8,6 +8,7 @@ import '../repositories/product_repository.dart';
 import '../models/sale.dart';
 import '../models/product.dart';
 import '../widgets/enhanced_feedback_widget.dart';
+import '../utils/tsh_formatter.dart';
 import '../utils/secure_error_handler.dart';
 
 class EnhancedReportsScreen extends StatefulWidget {
@@ -295,8 +296,7 @@ class _EnhancedReportsScreenState extends State<EnhancedReportsScreen>
     final metrics = [
       _MetricData(
         title: 'Total Revenue',
-        value: NumberFormat.currency(symbol: '\$')
-            .format(_analyticsData['totalRevenue'] ?? 0),
+        value: TSHFormatter.formatCurrency(_analyticsData['totalRevenue'] ?? 0),
         icon: Icons.attach_money,
         color: primaryGreen,
         trend: '+12.5%',
@@ -310,8 +310,7 @@ class _EnhancedReportsScreenState extends State<EnhancedReportsScreen>
       ),
       _MetricData(
         title: 'Avg Order Value',
-        value: NumberFormat.currency(symbol: '\$')
-            .format(_analyticsData['averageOrderValue'] ?? 0),
+        value: TSHFormatter.formatCurrency(_analyticsData['averageOrderValue'] ?? 0),
         icon: Icons.analytics,
         color: accentOrange,
         trend: '+4.2%',
@@ -647,7 +646,7 @@ class _EnhancedReportsScreenState extends State<EnhancedReportsScreen>
                   ),
                 ),
                 Text(
-                  'Sold: ${stats['quantity']} | Revenue: ${NumberFormat.currency(symbol: '\$').format(stats['revenue'])}',
+                  'Sold: ${stats['quantity']} | Revenue: ${TSHFormatter.formatCurrency(stats['revenue'])}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: lightGray,
@@ -744,7 +743,7 @@ class _EnhancedReportsScreenState extends State<EnhancedReportsScreen>
             ),
           ),
           Text(
-            NumberFormat.currency(symbol: '\$').format(sale.totalPrice),
+            TSHFormatter.formatCurrency(sale.totalPrice),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: primaryGreen,

@@ -118,7 +118,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               throw Exception('Failed to delete product');
             }
           }
-          
+
           _loadProducts();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -155,12 +155,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
           } else {
             // Native: Use ProductRepository
             final productData = {'quantity': 0};
-            final success = await _productRepository.updateProduct(product.id, productData);
+            final success =
+                await _productRepository.updateProduct(product.id, productData);
             if (!success) {
               throw Exception('Failed to discontinue product');
             }
           }
-          
+
           _loadProducts();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

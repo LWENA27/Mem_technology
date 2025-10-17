@@ -117,13 +117,13 @@ class AuthErrorWidget extends StatefulWidget {
   final VoidCallback? onForgotPassword;
 
   const AuthErrorWidget({
-    Key? key,
+    super.key,
     required this.message,
     required this.icon,
     required this.color,
     this.onRetry,
     this.onForgotPassword,
-  }) : super(key: key);
+  });
 
   @override
   State<AuthErrorWidget> createState() => _AuthErrorWidgetState();
@@ -231,8 +231,8 @@ class _AuthErrorWidgetState extends State<AuthErrorWidget>
                           const SizedBox(width: 8),
                           ElevatedButton.icon(
                             onPressed: widget.onRetry,
-                            icon: Icon(Icons.refresh, size: 16),
-                            label: Text('Try Again'),
+                            icon: const Icon(Icons.refresh, size: 16),
+                            label: const Text('Try Again'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: widget.color,
                               foregroundColor: Colors.white,
@@ -261,9 +261,9 @@ class AuthSuccessWidget extends StatefulWidget {
   final String message;
 
   const AuthSuccessWidget({
-    Key? key,
+    super.key,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   State<AuthSuccessWidget> createState() => _AuthSuccessWidgetState();
@@ -319,7 +319,7 @@ class _AuthSuccessWidgetState extends State<AuthSuccessWidget>
             ),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.check_circle_outline,
                   color: Colors.green,
                   size: 24,
