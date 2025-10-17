@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_dashboard.dart';
 import 'super_admin_dashboard.dart';
+import '../utils/auth_error_handler.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSupabaseInitialized = false;
   bool _isPasswordVisible = false;
   String? _errorMessage;
+  bool _showSuccess = false;
 
   // MEM Technology Color Scheme (Refined from logo)
   static const Color primaryGreen =
@@ -39,6 +41,28 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       _checkLoginStatus();
     });
+    
+    // Clear errors when user starts typing
+    _emailController.addListener(_clearErrorsOnTyping);
+    _passwordController.addListener(_clearErrorsOnTyping);
+  }
+
+  void _clearErrorsOnTyping() {
+    if (_errorMessage != null) {
+      setState(() {
+        _errorMessage = null;
+        _showSuccess = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.removeListener(_clearErrorsOnTyping);
+    _passwordController.removeListener(_clearErrorsOnTyping);
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   _checkLoginStatus() async {
@@ -168,6 +192,15 @@ class _LoginScreenState extends State<LoginScreen> {
           final role = userData['role'];
           debugPrint('Login: User role is $role');
 
+          // Show success feedback before navigation
+          setState(() {
+            _showSuccess = true;
+            _errorMessage = null;
+          });
+
+          // Brief delay to show success animation
+          await Future.delayed(const Duration(milliseconds: 800));
+
           if (role == 'admin') {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const AdminDashboard()),
@@ -184,7 +217,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       debugPrint('Login error: $e');
       if (mounted) {
-        setState(() => _errorMessage = 'Login failed: ${e.toString()}');
+        setState(() {
+          _errorMessage = AuthErrorHandler.getUserFriendlyMessage(e);
+          _showSuccess = false;
+        });
       }
     } finally {
       if (mounted) {
@@ -419,27 +455,23 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           if (_errorMessage != null) ...[
                             const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.error_outline,
-                                      color: Colors.red.shade600, size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _errorMessage!,
-                                      style:
-                                          TextStyle(color: Colors.red.shade600),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            AuthErrorWidget(
+                              message: _errorMessage!,
+                              icon: AuthErrorHandler.getErrorIcon(_errorMessage!),
+                              color: AuthErrorHandler.getErrorColor(_errorMessage!),
+                              onRetry: () {
+                                setState(() {
+                                  _errorMessage = null;
+                                });
+                                _login();
+                              },
+                              onForgotPassword: _showForgotPasswordDialog,
+                            ),
+                          ],
+                          if (_showSuccess) ...[
+                            const SizedBox(height: 12),
+                            const AuthSuccessWidget(
+                              message: 'Login successful! Redirecting...',
                             ),
                           ],
                           const SizedBox(height: 16),
@@ -761,49 +793,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       debugPrint('Registration error: $e');
       if (mounted) {
-        String errorMessage = 'Registration failed: ';
-
-        // Handle specific Supabase Auth errors
-        if (e.toString().contains('email_address_invalid')) {
-          errorMessage +=
-              'Please enter a valid email address. Make sure there are no spaces or special characters.';
-        } else if (e.toString().contains('User already registered')) {
-          errorMessage +=
-              'This email is already registered. Please use a different email or try logging in.';
-        } else if (e
-            .toString()
-            .contains('duplicate key value violates unique constraint')) {
-          errorMessage +=
-              'Account already exists. Please try logging in with your email and password instead.';
-        } else if (e.toString().contains('Password should be at least')) {
-          errorMessage += 'Password must be at least 6 characters long.';
-        } else if (e.toString().contains('Invalid email')) {
-          errorMessage +=
-              'The email format is invalid. Please check and try again.';
-        } else if (e.toString().contains('row-level security policy')) {
-          errorMessage +=
-              'Database permission error. Please try again in a few moments or contact support.';
-        } else if (e
-            .toString()
-            .contains('Authentication failed after user creation')) {
-          errorMessage +=
-              'Account created successfully but automatic login failed. Please try logging in manually with your credentials.';
-        } else if (e
-            .toString()
-            .contains('Registration completed but automatic login failed')) {
-          errorMessage +=
-              'Account created successfully! Please try logging in with your email and password.';
-        } else if (e.toString().contains('timeout')) {
-          errorMessage +=
-              'Request timed out. Please check your internet connection and try again.';
-        } else if (e.toString().contains('Network')) {
-          errorMessage +=
-              'Network error. Please check your internet connection.';
-        } else {
-          errorMessage += e.toString();
-        }
-
-        setState(() => _errorMessage = errorMessage);
+        setState(() => _errorMessage = AuthErrorHandler.getUserFriendlyMessage(e));
       }
     } finally {
       if (mounted) {
@@ -1068,27 +1058,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           if (_errorMessage != null) ...[
                             const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.error_outline,
-                                      color: Colors.red.shade600, size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _errorMessage!,
-                                      style:
-                                          TextStyle(color: Colors.red.shade600),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            AuthErrorWidget(
+                              message: _errorMessage!,
+                              icon: AuthErrorHandler.getErrorIcon(_errorMessage!),
+                              color: AuthErrorHandler.getErrorColor(_errorMessage!),
+                              onRetry: () {
+                                setState(() {
+                                  _errorMessage = null;
+                                });
+                              },
                             ),
                           ],
                           const SizedBox(height: 32),
