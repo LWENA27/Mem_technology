@@ -360,7 +360,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(width: 12),
                 const Text(
-                  'About MEM Technology',
+                  'About Lwena Tech',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

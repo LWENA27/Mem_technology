@@ -149,7 +149,7 @@ FEATURES:
 - Real-time synchronization
 - Cross-platform compatibility
 
-© 2025 MEM Technology. All rights reserved.
+© 2025 Lwena Tech. All rights reserved.
 EOF
         
         echo "✅ Web build completed: $WEB_DIR"

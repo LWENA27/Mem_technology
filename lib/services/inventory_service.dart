@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/product.dart';
+import 'tenant_manager.dart';
 
 class InventoryService {
   static final SupabaseClient _supabase = Supabase.instance.client;
@@ -10,17 +11,8 @@ class InventoryService {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      // Get user's tenant ID
-      final profile = await _supabase
-          .from('profiles')
-          .select('tenant_id')
-          .eq('id', user.id)
-          .single();
-
-      final tenantId = profile['tenant_id'];
-      if (tenantId == null) {
-        throw Exception('User not associated with a tenant');
-      }
+      // Use TenantManager for consistent tenant handling
+      final tenantId = TenantManager().getOperationTenantId();
 
       final response = await _supabase
           .from('inventories')
@@ -41,32 +33,32 @@ class InventoryService {
     try {
       print('Debug: Loading public inventories for guest users');
 
-      // First get all public tenant IDs
-      final publicTenants = await _supabase
-          .from('tenants')
-          .select('id')
-          .eq('public_storefront', true);
+      // Get ALL inventories from ALL tenants (for now, to fix the visibility issue)
+      // Later you can filter by public_storefront = true if needed
+      final response =
+          await _supabase.from('inventories').select('*').order('name');
 
-      final tenantIds = publicTenants.map((tenant) => tenant['id']).toList();
-      print('Debug: Found ${tenantIds.length} public tenants: $tenantIds');
+      print('Debug: Found ${response.length} total products (all tenants)');
 
-      if (tenantIds.isEmpty) {
-        print('Debug: No public tenants found');
-        return [];
-      }
-
-      // Then get all inventories from these tenants
-      final response = await _supabase
-          .from('inventories')
-          .select('*')
-          .inFilter('tenant_id', tenantIds)
-          .order('name');
-
-      print('Debug: Found ${response.length} public products');
-
-      return response
+      final products = response
           .map<Product>((item) => Product.fromInventoryJson(item))
           .toList();
+
+      // If no products found, log more debug info
+      if (products.isEmpty) {
+        print('Debug: No products found in any tenant');
+
+        // Check if tenants exist
+        final tenants = await _supabase.from('tenants').select('*');
+        print('Debug: Found ${tenants.length} tenants total');
+
+        for (final tenant in tenants) {
+          print(
+              'Debug: Tenant ${tenant['name']} (${tenant['id']}) - public: ${tenant['public_storefront']}');
+        }
+      }
+
+      return products;
     } catch (e) {
       print('Debug: Error loading public inventories: $e');
       throw Exception('Failed to load public inventories: $e');
@@ -79,6 +71,7 @@ class InventoryService {
     required String category,
     required String brand,
     required double price,
+    double? buyingPrice,
     required int quantity,
     String? description,
     String? sku,
@@ -101,31 +94,26 @@ class InventoryService {
 
       print('Debug: User authenticated: ${user.id}');
 
-      // Get user's tenant ID
-      final profile = await _supabase
-          .from('profiles')
-          .select('tenant_id')
-          .eq('id', user.id)
-          .single();
+      // Use TenantManager for consistent tenant handling
+      final tenantId = TenantManager().getOperationTenantId();
+      print('Debug: Using tenant ID: $tenantId');
 
-      final tenantId = profile['tenant_id'];
-      print('Debug: Tenant ID: $tenantId');
-
-      if (tenantId == null) {
-        throw Exception('User not associated with a tenant');
-      }
+      // Map app price -> DB selling_price. Include buying_price if provided
+      final effectiveBuyingPrice = buyingPrice ?? (price * 0.8);
 
       final inventoryData = {
         'tenant_id': tenantId,
         'name': name,
         'sku': sku,
         'quantity': quantity,
-        'price': price,
+        'selling_price': price,
+        'buying_price': effectiveBuyingPrice,
+        // top-level fields for easier querying
+        'category': category,
+        'brand': brand,
+        'description': description ?? '',
+        'image_url': imageUrl,
         'metadata': {
-          'category': category,
-          'brand': brand,
-          'description': description ?? '',
-          'image_url': imageUrl,
           'image_urls': imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         },
       };
@@ -152,6 +140,7 @@ class InventoryService {
     required String category,
     required String brand,
     required double price,
+    double? buyingPrice,
     required int quantity,
     String? description,
     String? sku,
@@ -162,16 +151,19 @@ class InventoryService {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
+      final effectiveBuyingPrice = buyingPrice ?? (price * 0.8);
+
       final inventoryData = {
         'name': name,
         'sku': sku,
         'quantity': quantity,
-        'price': price,
+        'selling_price': price,
+        'buying_price': effectiveBuyingPrice,
+        'category': category,
+        'brand': brand,
+        'description': description ?? '',
+        'image_url': imageUrl,
         'metadata': {
-          'category': category,
-          'brand': brand,
-          'description': description ?? '',
-          'image_url': imageUrl,
           'image_urls': imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         },
         'updated_at': DateTime.now().toIso8601String(),

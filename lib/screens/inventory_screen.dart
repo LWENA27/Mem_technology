@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:lwenatech/services/inventory_service.dart';
-import 'package:lwenatech/models/product.dart';
-import 'package:lwenatech/widgets/add_product_dialog.dart';
-import 'package:lwenatech/widgets/make_sale_dialog.dart';
+import 'package:flutter/foundation.dart';
+import '../repositories/product_repository.dart';
+import '../services/inventory_service.dart';
+import '../models/product.dart';
+import '../widgets/add_product_dialog.dart';
+import '../widgets/make_sale_dialog.dart';
+import '../widgets/enhanced_feedback_widget.dart';
+import '../utils/secure_error_handler.dart';
+import '../utils/tsh_formatter.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -14,12 +19,12 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> {
   List<Product> _products = [];
   bool _isLoading = true;
+  final ProductRepository _productRepository = ProductRepository();
 
   // MEM Technology Color Scheme
   static const Color primaryGreen = Color(0xFF4CAF50);
   static const Color darkGray = Color(0xFF424242);
   static const Color lightGray = Color(0xFF757575);
-  static const Color backgroundColor = Color(0xFFF5F5F5);
 
   @override
   void initState() {
@@ -30,20 +35,33 @@ class _InventoryScreenState extends State<InventoryScreen> {
   _loadProducts() async {
     setState(() => _isLoading = true);
     try {
-      final products = await InventoryService.getInventories();
+      List<Product> products;
+
+      // Use platform-aware product loading
+      if (kIsWeb) {
+        // Web: Use InventoryService (Supabase directly)
+        products = await InventoryService.getInventories();
+      } else {
+        // Native: Use ProductRepository (offline-first)
+        products = await _productRepository.getAllProductsAsModels();
+      }
+
       setState(() {
         _products = products;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       setState(() => _isLoading = false);
+
+      // Use secure error handling to hide sensitive information
+      final userFriendlyMessage =
+          SecureErrorHandler.handleError('Load Products', e, stackTrace);
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load products: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        EnhancedFeedbackWidget.showErrorSnackBar(
+          context,
+          userFriendlyMessage,
+          isLong: true,
         );
       }
     }
@@ -89,45 +107,51 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (action != null) {
       try {
         if (action == 'delete') {
-          await InventoryService.deleteInventory(product.id);
-          _loadProducts();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('${product.name} deleted successfully'),
-                    ),
-                  ],
+          final success = await _productRepository.deleteProduct(product.id);
+          if (success) {
+            _loadProducts();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text('${product.name} deleted successfully'),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: primaryGreen,
+                  behavior: SnackBarBehavior.floating,
                 ),
-                backgroundColor: primaryGreen,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+              );
+            }
           }
         } else if (action == 'discontinue') {
           // Set quantity to 0 to mark as discontinued
-          await InventoryService.updateQuantity(product.id, 0);
-          _loadProducts();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('${product.name} marked as discontinued'),
-                    ),
-                  ],
+          final productData = {'quantity': 0};
+          final success =
+              await _productRepository.updateProduct(product.id, productData);
+          if (success) {
+            _loadProducts();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text('${product.name} marked as discontinued'),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Colors.orange,
+                  behavior: SnackBarBehavior.floating,
                 ),
-                backgroundColor: Colors.orange,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+              );
+            }
           }
         }
       } catch (e) {
@@ -413,7 +437,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     children: [
                                       Expanded(
                                         child: Text(
-                                          'Price: TSH ${product.sellingPrice.toStringAsFixed(2)}',
+                                          'Selling: ${TSHFormatter.formatCurrency(product.sellingPrice)}',
                                           style: const TextStyle(
                                             color: primaryGreen,
                                             fontWeight: FontWeight.w600,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import '../services/report_service.dart';
-import '../services/DatabaseService.dart';
+import '../services/database_service.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
 
@@ -654,35 +652,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
 
-  Future<void> _downloadReport() async {
-    if (_reportData == null) {
-      _showMessage('No data available for download');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final reportService = ReportService();
-      await reportService.generateSalesReport(_startDate, _endDate);
-
-      if (kIsWeb) {
-        // For web, trigger download
-        _showMessage('Report generated successfully');
-      } else {
-        // For mobile/desktop, save to downloads
-        final fileName =
-            'sales_report_${DateFormat('yyyy_MM_dd').format(_startDate)}_to_${DateFormat('yyyy_MM_dd').format(_endDate)}.pdf';
-        // Implementation depends on platform-specific file handling
-        _showMessage('Report saved as $fileName');
-      }
-    } catch (e) {
-      _showMessage('Failed to generate report: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
   void _showAllSales() {
     showDialog(
       context: context,
@@ -752,13 +721,4 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: primaryGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 }

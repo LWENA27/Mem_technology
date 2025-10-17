@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/sale.dart';
+import '../repositories/sales_repository.dart';
 import '../services/sales_service.dart';
 import '../services/receipt_service.dart';
 
@@ -28,7 +30,18 @@ class _SalesScreenState extends State<SalesScreen> {
     });
 
     try {
-      final sales = await SalesService.getSales();
+      List<Sale> sales;
+
+      // Use platform-aware sales loading
+      if (kIsWeb) {
+        // Web: Use SalesService (Supabase directly)
+        sales = await SalesService.getSales();
+      } else {
+        // Native: Use SalesRepository (offline-first)
+        final salesRepository = SalesRepository();
+        sales = await salesRepository.getAllSalesAsModels();
+      }
+
       setState(() {
         _sales = sales;
         _isLoading = false;

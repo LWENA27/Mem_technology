@@ -11,6 +11,7 @@ dependencies:
   supabase_flutter: ^2.6.0
   cupertino_icons: ^1.0.6
   sqflite: ^2.3.0
+  sqlite3_flutter_libs: ^0.5.0    # SQLite3 for mobile platforms
   path: ^1.8.0
   uuid: ^4.5.0
   intl: ^0.18.0
@@ -22,11 +23,30 @@ dependencies:
   shared_preferences: ^2.2.2
   url_launcher: ^6.2.0
   package_info_plus: ^8.0.0
+  http: ^1.1.0                   # HTTP client
+
+ # NEW: Offline functionality
+  connectivity_plus: ^6.0.5      # Internet connectivity monitoring
+  drift: ^2.18.0                 # Better SQLite ORM with sync capabilities
+  drift_flutter: ^0.1.0          # Flutter integration for Drift
+  sqlite3: ^2.4.0               # SQLite3 for native platforms
+  hive: ^2.2.3                   # Fast key-value storage
+  hive_flutter: ^1.1.0           # Hive Flutter integration
+  json_annotation: ^4.9.0        # JSON serialization
+  equatable: ^2.0.5              # Value equality
+  bloc: ^8.1.4                   # State management
+  flutter_bloc: ^8.1.6           # Flutter Bloc integration
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  # NEW: Code generation
+  build_runner: ^2.4.9
+  drift_dev: ^2.18.0
+  hive_generator: ^2.0.1
+  json_serializable: ^6.8.0
 
 flutter:
   uses-material-design: true

@@ -1,28 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'screens/admin_dashboard.dart';
+import 'screens/super_admin_dashboard.dart';
 import 'screens/customer_view.dart';
 import 'services/image_upload_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/sync_service.dart';
+import 'services/tenant_manager.dart';
+import 'database/offline_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Supabase.initialize(
-      url: 'https://kzjgdeqfmxkmpmadtbpb.supabase.co',
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6amdkZXFmbXhrbXBtYWR0YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTk3NjQsImV4cCI6MjA2NDg3NTc2NH0.NTEzbvVCQ_vNTJPS5bFPSOm5XNRjUrFpSUPEWQDm434',
+  // Platform-specific optimizations for Linux desktop
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
+    // Set system UI overlay style for better rendering
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
     );
-    print(
-        'supabase.supabase_flutter: INFO: ***** Supabase init completed ***** ');
+  }
 
-    // Initialize image storage bucket
-    await ImageUploadService.initializeStorage();
-    print('Image storage initialized');
+  // Suppress drift database multiple instance warnings
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
-    // Initialize image storage
-    await ImageUploadService.initializeStorage();
-    print('Image storage initialized');
+  try {
+    // Initialize offline storage
+    await Hive.initFlutter();
+    print('Hive initialized for offline storage');
+
+    // Initialize offline database (singleton) - ensure it's ready
+    OfflineDatabase.instance;
+    print('Offline database initialized');
+
+    // Initialize connectivity monitoring
+    await ConnectivityService().initialize();
+    print('Connectivity service initialized');
+
+    // Initialize Supabase - using local development instance
+    await Supabase.initialize(
+      url: 'http://127.0.0.1:54321',
+      anonKey: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
+    );
+    print('Supabase init completed (local development)');
+
+    // Initialize sync service
+    await SyncService().initialize();
+    print('Sync service initialized');
+
+    // Initialize tenant manager for consistent tenant handling
+    await TenantManager().initializeTenant();
+    print('Tenant manager initialized');
+
+    // Initialize image storage bucket with timeout handling
+    try {
+      await ImageUploadService.initializeStorage()
+          .timeout(const Duration(seconds: 5));
+      print('Image storage initialized');
+    } catch (e) {
+      print('Error initializing storage: $e');
+      // Don't let storage initialization failure prevent app startup
+    }
 
     runApp(const MyApp());
   } catch (e) {
@@ -38,11 +81,25 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'InventoryMaster SaaS',
       debugShowCheckedModeBanner: false,
+      // Linux-specific optimizations to reduce screen blinking
+      builder: (context, child) {
+        // Add RepaintBoundary to reduce unnecessary repaints on Linux
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
+          return RepaintBoundary(
+            child: child ?? const SizedBox.shrink(),
+          );
+        }
+        return child ?? const SizedBox.shrink();
+      },
       theme: ThemeData(
         primarySwatch: Colors.green,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4CAF50), // MEM Technology green
         ),
+        // Optimize material design for desktop performance
+        visualDensity: !kIsWeb && defaultTargetPlatform == TargetPlatform.linux
+            ? VisualDensity.standard
+            : VisualDensity.adaptivePlatformDensity,
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF4CAF50),
           foregroundColor: Colors.white,
@@ -69,6 +126,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  bool _isNavigating = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,35 +136,104 @@ class _SplashScreenState extends State<SplashScreen> {
 
   _checkAuthStatus() async {
     try {
-      // Give a small delay for better UX
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Longer delay on Linux to reduce rapid state changes
+      final delay = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux
+          ? const Duration(milliseconds: 1000)
+          : const Duration(milliseconds: 500);
+
+      await Future.delayed(delay);
 
       final session = Supabase.instance.client.auth.currentSession;
 
-      if (mounted) {
+      if (mounted && !_isNavigating) {
+        _isNavigating = true;
+
         if (session != null) {
-          print('Active session found, navigating to dashboard');
-          // User is logged in, go directly to dashboard (which shows inventory)
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const AdminDashboard()),
-          );
+          print('Active session found, checking user role');
+
+          // Check if user is super admin
+          final isSuperAdmin = await _checkSuperAdminStatus(session.user.id);
+
+          if (isSuperAdmin) {
+            print('Super admin detected, navigating to super admin dashboard');
+            await Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const SuperAdminDashboard(),
+                transitionDuration: const Duration(milliseconds: 300),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
+            );
+          } else {
+            // Ensure tenant consistency for authenticated user
+            await TenantManager().ensureTenantConsistency();
+
+            // User is logged in, go directly to dashboard (which shows inventory)
+            await Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const AdminDashboard(),
+                transitionDuration: const Duration(milliseconds: 300),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
+            );
+          }
         } else {
           print(
               'No active session found, showing customer view with all products');
           // No session, show customer view where guests can browse all products
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const CustomerView()),
+          await Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const CustomerView(),
+              transitionDuration: const Duration(milliseconds: 300),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+            ),
           );
         }
       }
     } catch (e) {
       print('Error checking auth status: $e');
-      if (mounted) {
+      if (mounted && !_isNavigating) {
+        _isNavigating = true;
         // On error, show customer view so users can still browse products
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const CustomerView()),
+        await Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const CustomerView(),
+            transitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
         );
       }
+    }
+  }
+
+  Future<bool> _checkSuperAdminStatus(String userId) async {
+    try {
+      // Check if user has super_admin role
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+      return response['role'] == 'super_admin';
+    } catch (e) {
+      print('Error checking super admin status: $e');
+      return false;
     }
   }
 
@@ -113,37 +241,39 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Color(0xFF4CAF50),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inventory,
-              size: 80,
-              color: Colors.white,
-            ),
-            SizedBox(height: 24),
-            Text(
-              'InventoryMaster',
-              style: TextStyle(
+      body: RepaintBoundary(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inventory,
+                size: 80,
                 color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
               ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'SaaS Inventory Management',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
+              SizedBox(height: 24),
+              Text(
+                'InventoryMaster',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            SizedBox(height: 32),
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ],
+              SizedBox(height: 8),
+              Text(
+                'SaaS Inventory Management',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+              SizedBox(height: 32),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:lwenatech/services/DatabaseService.dart';
+import 'package:lwenatech/services/database_service.dart';
 import 'package:lwenatech/models/product.dart';
 import 'package:lwenatech/models/sale.dart';
 

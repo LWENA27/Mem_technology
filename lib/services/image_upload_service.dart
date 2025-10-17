@@ -1,22 +1,32 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:math';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'connectivity_service.dart';
 
 class ImageUploadService {
   static final SupabaseClient _supabase = Supabase.instance.client;
+  static final ConnectivityService _connectivityService = ConnectivityService();
   static const String _bucketName = 'product-images';
+  static const String _localImageFolder = 'offline_images';
 
   /// Upload image to Supabase Storage and return the public URL
+  /// If offline, store locally and return a local path
   static Future<String?> uploadImage({
     required XFile imageFile,
     String? existingImageUrl,
   }) async {
     try {
       print('Debug: Starting image upload process...');
+
+      // Check if we're online
+      if (!_connectivityService.isOnline) {
+        print('Debug: Offline - storing image locally');
+        return await _storeImageLocally(imageFile);
+      }
 
       // Delete existing image if provided
       if (existingImageUrl != null && existingImageUrl.isNotEmpty) {
@@ -74,6 +84,7 @@ class ImageUploadService {
   }
 
   /// Upload multiple images to Supabase Storage and return the public URLs
+  /// If offline, store locally and return local paths
   static Future<List<String>> uploadMultipleImages({
     required List<XFile> imageFiles,
     List<String>? existingImageUrls,
@@ -81,6 +92,30 @@ class ImageUploadService {
     try {
       print('Debug: Starting multiple image upload process...');
       print('Debug: Uploading ${imageFiles.length} images');
+
+      // Check if we're online
+      if (!_connectivityService.isOnline) {
+        print('Debug: Offline - storing ${imageFiles.length} images locally');
+        final List<String> localPaths = [];
+
+        for (int i = 0; i < imageFiles.length; i++) {
+          final imageFile = imageFiles[i];
+          print('Debug: Storing image ${i + 1}/${imageFiles.length} locally');
+
+          try {
+            final localPath = await _storeImageLocally(imageFile);
+            if (localPath != null) {
+              localPaths.add(localPath);
+            }
+          } catch (e) {
+            print('Warning: Failed to store image ${i + 1} locally: $e');
+          }
+        }
+
+        print(
+            'Debug: Successfully stored ${localPaths.length}/${imageFiles.length} images locally');
+        return localPaths;
+      }
 
       // Delete existing images if provided
       if (existingImageUrls != null && existingImageUrls.isNotEmpty) {
@@ -246,5 +281,92 @@ class ImageUploadService {
   /// Get file size in MB
   static double getFileSizeInMB(int bytes) {
     return bytes / (1024 * 1024);
+  }
+
+  /// Store image locally when offline
+  static Future<String?> _storeImageLocally(XFile imageFile) async {
+    try {
+      // Get app documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+      final localImagesDir =
+          Directory(path.join(appDir.path, _localImageFolder));
+
+      // Create directory if it doesn't exist
+      if (!await localImagesDir.exists()) {
+        await localImagesDir.create(recursive: true);
+      }
+
+      // Generate unique filename
+      const uuid = Uuid();
+      final fileExtension = imageFile.path.split('.').last.toLowerCase();
+      final fileName = '${uuid.v4()}.$fileExtension';
+      final localPath = path.join(localImagesDir.path, fileName);
+
+      // Copy image to local storage
+      Uint8List imageBytes;
+      if (kIsWeb) {
+        imageBytes = await imageFile.readAsBytes();
+        final localFile = File(localPath);
+        await localFile.writeAsBytes(imageBytes);
+      } else {
+        final sourceFile = File(imageFile.path);
+        await sourceFile.copy(localPath);
+      }
+
+      print('Debug: Stored image locally at: $localPath');
+      return 'local://$localPath'; // Use local:// prefix to identify local images
+    } catch (e) {
+      print('Error storing image locally: $e');
+      return null;
+    }
+  }
+
+  /// Upload locally stored images to Supabase when online
+  static Future<List<String>> syncLocalImages(List<String> localPaths) async {
+    final List<String> uploadedUrls = [];
+
+    for (final localPath in localPaths) {
+      if (localPath.startsWith('local://')) {
+        try {
+          final filePath = localPath.substring(8); // Remove 'local://' prefix
+          final file = File(filePath);
+
+          if (await file.exists()) {
+            // Create XFile from local file
+            final xFile = XFile(filePath);
+
+            // Upload to Supabase
+            final url = await uploadImage(imageFile: xFile);
+            if (url != null) {
+              uploadedUrls.add(url);
+
+              // Delete local file after successful upload
+              await file.delete();
+              print('Debug: Uploaded and deleted local image: $filePath');
+            }
+          }
+        } catch (e) {
+          print('Error syncing local image $localPath: $e');
+        }
+      } else {
+        // Already a remote URL, keep as is
+        uploadedUrls.add(localPath);
+      }
+    }
+
+    return uploadedUrls;
+  }
+
+  /// Check if a path is a local image
+  static bool isLocalImage(String imagePath) {
+    return imagePath.startsWith('local://');
+  }
+
+  /// Get display path for local images
+  static String getDisplayPath(String imagePath) {
+    if (isLocalImage(imagePath)) {
+      return imagePath.substring(8); // Remove 'local://' prefix
+    }
+    return imagePath;
   }
 }

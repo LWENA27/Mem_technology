@@ -34,15 +34,15 @@ class SalesService {
 
       // Insert sale record
       final saleData = {
-        'tenant_id': tenantId,
         'product_id': productId,
         'product_name': productName,
         'quantity': quantity,
         'unit_price': unitPrice,
-        'total_price': totalPrice,
+        'total_amount': totalPrice,
         'customer_name': customerName,
         'customer_phone': customerPhone,
-        'sale_date': saleDate,
+        'date': saleDate,
+        'tenant_id': tenantId,
         'receipt_number': receiptNumber,
       };
 
@@ -96,7 +96,7 @@ class SalesService {
           .from('sales')
           .select()
           .eq('tenant_id', tenantId)
-          .order('sale_date', ascending: false);
+          .order('date', ascending: false);
 
       return response.map<Sale>((sale) => Sale.fromJson(sale)).toList();
     } catch (e) {
@@ -159,11 +159,11 @@ class SalesService {
           .eq('tenant_id', tenantId);
 
       if (startDate != null) {
-        query = query.gte('sale_date', startDate.toIso8601String());
+        query = query.gte('date', startDate.toIso8601String());
       }
 
       if (endDate != null) {
-        query = query.lte('sale_date', endDate.toIso8601String());
+        query = query.lte('date', endDate.toIso8601String());
       }
 
       final response = await query;

@@ -6,6 +6,8 @@ import 'dart:async';
 import '../models/product.dart';
 import '../services/inventory_service.dart';
 import '../services/supabase_service.dart';
+import '../services/enhanced_connectivity_service.dart';
+import '../widgets/enhanced_feedback_widget.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 
@@ -24,6 +26,9 @@ class _CustomerViewState extends State<CustomerView> {
   String _selectedCategory = 'All';
   Set<String> _categories = {'All'};
   StreamSubscription<AuthState>? _authSubscription;
+  final EnhancedConnectivityService _connectivityService =
+      EnhancedConnectivityService();
+  String? _lastError;
 
   // MEM Technology Color Scheme
   static const Color primaryGreen = Color(0xFF4CAF50);
@@ -34,13 +39,42 @@ class _CustomerViewState extends State<CustomerView> {
   @override
   void initState() {
     super.initState();
-    _checkAuthAndLoadProducts();
-    _setupAuthListener();
+    // Defer heavy operations to after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAppComponents();
+    });
+  }
+
+  Future<void> _initializeAppComponents() async {
+    try {
+      // Initialize connectivity service first (lightweight)
+      _connectivityService.setContext(context);
+
+      // Setup auth listener (lightweight)
+      _setupAuthListener();
+
+      // Load products (this will handle Supabase initialization)
+      await _checkAuthAndLoadProducts();
+
+      // Initialize connectivity monitoring after main content loads
+      Future.microtask(() async {
+        await _connectivityService.initialize();
+      });
+    } catch (e) {
+      debugPrint('Error during app initialization: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _lastError = 'Failed to initialize app: $e';
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _connectivityService.dispose();
     super.dispose();
   }
 
@@ -87,37 +121,71 @@ class _CustomerViewState extends State<CustomerView> {
       }
     } catch (e) {
       debugPrint('Error during initialization: $e');
+      _lastError = EnhancedFeedbackWidget.getErrorMessage(e);
       setState(() {
         _isLoading = false;
       });
+
+      if (mounted) {
+        EnhancedFeedbackWidget.showErrorSnackBar(
+          context,
+          _lastError!,
+          isLong: true,
+        );
+      }
     }
   }
 
   Future<void> _loadProducts() async {
-    setState(() => _isLoading = true);
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _lastError = null;
+    });
+
     try {
-      debugPrint('Loading public products for customer view...');
+      // For customer view, we only need public products online
+      // No offline fallback needed since customers don't have local data
+      debugPrint('Loading products online...');
       final products = await InventoryService.getPublicInventories();
-      debugPrint('Public products loaded: count = \'${products.length}\'');
-      final categories = products.map((p) => p.category).toSet();
-      debugPrint('Categories found: $categories');
-      setState(() {
-        _products = products;
-        _filteredProducts = products;
-        _categories = {'All', ...categories};
-        _isLoading = false;
-      });
+      debugPrint(
+          'Online public products loaded: count = \'${products.length}\'');
+
+      if (mounted) {
+        final categories = products.map((p) => p.category).toSet();
+        debugPrint('Categories found: $categories');
+
+        setState(() {
+          _products = products;
+          _filteredProducts = products;
+          _categories = {'All', ...categories};
+          _isLoading = false;
+        });
+
+        if (products.isEmpty) {
+          EnhancedFeedbackWidget.showInfoSnackBar(
+              context, 'No products available at the moment');
+        } else {
+          EnhancedFeedbackWidget.showSuccessSnackBar(
+              context, 'Loaded ${products.length} products');
+        }
+      }
     } catch (e) {
-      debugPrint('Error loading public products: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load products: $e'),
-          backgroundColor: Colors.red.shade600,
-        ),
-      );
+      debugPrint('Error loading products: $e');
+      _lastError = EnhancedFeedbackWidget.getErrorMessage(e);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        EnhancedFeedbackWidget.showErrorSnackBar(
+          context,
+          _lastError!,
+          isLong: true,
+        );
+      }
     }
   }
 
@@ -150,19 +218,34 @@ class _CustomerViewState extends State<CustomerView> {
   }
 
   _sendWhatsAppMessage() async {
-    const phoneNumber = '+255692240929';
-    const message = 'Hello! Im interested in your products. Can you assist me?';
-    final url =
-        'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not launch WhatsApp'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    const groupLink =
+        'https://chat.whatsapp.com/B8RUxQsQM665hjVm3Z05lc?mode=ems_share_t';
+
+    try {
+      if (await canLaunchUrl(Uri.parse(groupLink))) {
+        await launchUrl(
+          Uri.parse(groupLink),
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not launch WhatsApp'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening WhatsApp: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -386,146 +469,142 @@ class _CustomerViewState extends State<CustomerView> {
           ),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
-                    ),
-                  )
-                : _filteredProducts.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.inventory_2, size: 64, color: lightGray),
-                            SizedBox(height: 16),
-                            Text(
-                              'No products available',
-                              style: TextStyle(fontSize: 18, color: darkGray),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Check back later for new arrivals',
-                              style: TextStyle(color: lightGray),
-                            ),
-                          ],
-                        ),
+                ? EnhancedFeedbackWidget.buildLoadingState(
+                    'Loading products...')
+                : _lastError != null
+                    ? EnhancedFeedbackWidget.buildErrorState(
+                        title: 'Error Loading Products',
+                        subtitle: _lastError!,
+                        onRetry: _loadProducts,
                       )
-                    : RefreshIndicator(
-                        color: primaryGreen,
-                        onRefresh: () async => _loadProducts(),
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.7,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                          itemCount: _filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = _filteredProducts[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        ProductDetailScreen(product: product),
-                                  ),
-                                );
-                              },
-                              child: Card(
-                                elevation: 4,
-                                shadowColor: Colors.grey.withOpacity(0.3),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildProductImage(product),
+                    : _filteredProducts.isEmpty
+                        ? EnhancedFeedbackWidget.buildEmptyState(
+                            icon: Icons.inventory_2,
+                            title: 'No products available',
+                            subtitle: _products.isEmpty
+                                ? 'Add products using admin panel or try again when online'
+                                : 'Try adjusting your search or category filter',
+                          )
+                        : RefreshIndicator(
+                            color: primaryGreen,
+                            onRefresh: () async => _loadProducts(),
+                            child: GridView.builder(
+                              padding: const EdgeInsets.all(12),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.7,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                              ),
+                              itemCount: _filteredProducts.length,
+                              itemBuilder: (context, index) {
+                                final product = _filteredProducts[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ProductDetailScreen(
+                                                product: product),
+                                      ),
+                                    );
+                                  },
+                                  child: Card(
+                                    elevation: 4,
+                                    shadowColor: Colors.grey.withOpacity(0.3),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              product.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: darkGray,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            Text(
-                                              product.brand,
-                                              style: const TextStyle(
-                                                  color: lightGray,
-                                                  fontSize: 12),
-                                            ),
-                                            const Spacer(),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          flex: 3,
+                                          child: _buildProductImage(product),
+                                        ),
+                                        Expanded(
+                                          flex: 2,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  'TSH ${product.sellingPrice.toStringAsFixed(2)}',
+                                                  product.name,
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
-                                                    color: primaryGreen,
-                                                    fontSize: 16,
+                                                    fontSize: 14,
+                                                    color: darkGray,
                                                   ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: primaryGreen
-                                                        .withOpacity(0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
-                                                    border: Border.all(
-                                                      color: primaryGreen
-                                                          .withOpacity(0.3),
+                                                Text(
+                                                  product.brand,
+                                                  style: const TextStyle(
+                                                      color: lightGray,
+                                                      fontSize: 12),
+                                                ),
+                                                const Spacer(),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      'TSH ${product.sellingPrice.toStringAsFixed(2)}',
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: primaryGreen,
+                                                        fontSize: 16,
+                                                      ),
                                                     ),
-                                                  ),
-                                                  child: Text(
-                                                    '${product.quantity} left',
-                                                    style: const TextStyle(
-                                                      fontSize: 10,
-                                                      color: primaryGreen,
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: primaryGreen
+                                                            .withOpacity(0.1),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                        border: Border.all(
+                                                          color: primaryGreen
+                                                              .withOpacity(0.3),
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        '${product.quantity} left',
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          color: primaryGreen,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
+                                                  ],
                                                 ),
                                               ],
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
           ),
         ],
       ),

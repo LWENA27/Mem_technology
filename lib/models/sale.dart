@@ -39,11 +39,11 @@ class Sale {
       productName: json['product_name'] as String? ?? 'Unnamed Product',
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice: (json['unit_price'] as num?)?.toDouble() ?? 0.0,
-      totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
+      totalPrice: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
       customerName: json['customer_name'] as String? ?? 'Unknown Customer',
       customerPhone: json['customer_phone'] as String?,
-      saleDate: json['sale_date'] != null
-          ? DateTime.parse(json['sale_date'] as String)
+      saleDate: json['date'] != null
+          ? DateTime.parse(json['date'] as String)
           : DateTime.now(),
       receiptNumber: json['receipt_number'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
@@ -60,10 +60,10 @@ class Sale {
         'product_name': productName,
         'quantity': quantity,
         'unit_price': unitPrice,
-        'total_price': totalPrice,
+        'total_amount': totalPrice,
         'customer_name': customerName,
         'customer_phone': customerPhone,
-        'sale_date': saleDate.toIso8601String(),
+        'date': saleDate.toIso8601String(),
         'receipt_number': receiptNumber,
         'metadata': metadata,
         'created_at': createdAt?.toIso8601String(),

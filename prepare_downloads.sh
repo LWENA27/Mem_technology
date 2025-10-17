@@ -315,13 +315,13 @@ sudo pacman -S gtk3 util-linux xz
 
 ## 📞 Contact Information
 
-**MEM Technology**  
+**Lwena Tech**  
 📧 Email: support@lwenatech.com  
 🌐 Website: https://lwenatech.com  
 💻 GitHub: https://github.com/LWENA27/Mem_technology  
 
 Built with ❤️ using Flutter & Supabase  
-© 2024 MEM Technology. All rights reserved.
+© 2024Lwena Tech. All rights reserved.
 EOF
 
 # Create downloads index page

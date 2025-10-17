@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../services/report_service.dart';
-import '../services/DatabaseService.dart';
+import '../services/database_service.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
 

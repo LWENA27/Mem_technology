@@ -76,7 +76,7 @@ SUPPORT:
 For technical support, visit: https://github.com/LWENA27/Mem_technology
 Email: support@lwenatech.com
 
-© 2025 MEM Technology. All rights reserved.
+© 2025 Lwena Tech. All rights reserved.
 EOF
 
     echo "📦 Created installer package at: $INSTALLER_DIR"

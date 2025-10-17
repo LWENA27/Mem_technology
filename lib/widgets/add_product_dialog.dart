@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
-import '../services/inventory_service.dart';
 import '../services/image_upload_service.dart';
+import '../repositories/product_repository.dart';
+import '../services/inventory_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:io';
-import 'dart:typed_data';
 
 class AddProductDialog extends StatefulWidget {
   final Product? product; // For editing existing products
-  final VoidCallback onProductAdded; // Add this callback parameter
+  final VoidCallback? onProductAdded; // Add this callback parameter
 
   const AddProductDialog({
     super.key,
     this.product,
-    required this.onProductAdded, // Make it required
+    this.onProductAdded, // Make it optional
   });
 
   @override
@@ -30,6 +31,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _sellingPriceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final ProductRepository _productRepository = ProductRepository();
 
   final List<File> _selectedImages = [];
   final List<XFile> _selectedImageFiles = [];
@@ -300,40 +302,107 @@ class _AddProductDialogState extends State<AddProductDialog> {
       print('Debug: Image URLs: $allImageUrls');
 
       if (widget.product == null) {
-        // Adding new product
-        await InventoryService.addInventory(
-          name: _nameController.text.trim(),
-          category: _categoryController.text.trim(),
-          brand: _brandController.text.trim(),
-          price: double.parse(_sellingPriceController.text),
-          quantity: int.parse(_quantityController.text),
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          sku: null, // Can add SKU field later if needed
-          imageUrls: allImageUrls,
-        );
-        _showSuccessMessage('Product added successfully!');
+        // Adding new product - use platform-appropriate service
+        if (kIsWeb) {
+          // Web platform: Use InventoryService (Supabase directly)
+          try {
+            final productId = await InventoryService.addInventory(
+              name: _nameController.text.trim(),
+              category: _categoryController.text.trim(),
+              brand: _brandController.text.trim(),
+              price: double.parse(_sellingPriceController.text),
+              buyingPrice: double.parse(_buyingPriceController.text),
+              quantity: int.parse(_quantityController.text),
+              description: _descriptionController.text.trim().isEmpty
+                  ? null
+                  : _descriptionController.text.trim(),
+              imageUrls: allImageUrls,
+            );
+            print('Debug: Product added with ID: $productId');
+            _showSuccessMessage('Product added successfully!');
+          } catch (e) {
+            print('Debug: Failed to add product via InventoryService: $e');
+            _showErrorMessage('Failed to add product. Please try again.');
+            return;
+          }
+        } else {
+          // Native platforms: Use ProductRepository (offline-first)
+          const uuid = Uuid();
+          final productId = uuid.v4();
+
+          final productData = {
+            'id': productId,
+            'name': _nameController.text.trim(),
+            'category': _categoryController.text.trim(),
+            'description': _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            'price': double.parse(_sellingPriceController.text),
+            'quantity': int.parse(_quantityController.text),
+            'imageUrls': allImageUrls,
+            'sku': null, // Can add SKU field later if needed
+          };
+
+          final success = await _productRepository.addProduct(productData);
+
+          if (success) {
+            _showSuccessMessage('Product added successfully!');
+          } else {
+            _showErrorMessage('Failed to add product. Please try again.');
+            return;
+          }
+        }
       } else {
         // Updating existing product
-        await InventoryService.updateInventory(
-          id: widget.product!.id,
-          name: _nameController.text.trim(),
-          category: _categoryController.text.trim(),
-          brand: _brandController.text.trim(),
-          price: double.parse(_sellingPriceController.text),
-          quantity: int.parse(_quantityController.text),
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          sku: null, // Can add SKU field later if needed
-          imageUrls: allImageUrls,
-        );
-        _showSuccessMessage('Product updated successfully!');
+        if (kIsWeb) {
+          // Web platform: Use InventoryService (Supabase directly)
+          try {
+            await InventoryService.updateInventory(
+              id: widget.product!.id,
+              name: _nameController.text.trim(),
+              category: _categoryController.text.trim(),
+              brand: _brandController.text.trim(),
+              price: double.parse(_sellingPriceController.text),
+              buyingPrice: double.parse(_buyingPriceController.text),
+              quantity: int.parse(_quantityController.text),
+              description: _descriptionController.text.trim().isEmpty
+                  ? null
+                  : _descriptionController.text.trim(),
+              imageUrls: allImageUrls,
+            );
+            _showSuccessMessage('Product updated successfully!');
+          } catch (e) {
+            print('Debug: Failed to update product via InventoryService: $e');
+            _showErrorMessage('Failed to update product. Please try again.');
+            return;
+          }
+        } else {
+          // Native platforms: Use ProductRepository (offline-first)
+          final productData = {
+            'name': _nameController.text.trim(),
+            'category': _categoryController.text.trim(),
+            'description': _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            'price': double.parse(_sellingPriceController.text),
+            'quantity': int.parse(_quantityController.text),
+            'imageUrls': allImageUrls,
+          };
+
+          final success = await _productRepository.updateProduct(
+              widget.product!.id, productData);
+
+          if (success) {
+            _showSuccessMessage('Product updated successfully!');
+          } else {
+            _showErrorMessage('Failed to update product. Please try again.');
+            return;
+          }
+        }
       }
 
       // Call the callback to refresh the inventory list
-      widget.onProductAdded();
+      widget.onProductAdded?.call();
 
       Navigator.of(context).pop(true); // Return true to indicate success
     } catch (e) {

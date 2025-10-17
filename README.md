@@ -271,7 +271,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📝 License
 
-© 2025 MEM Technology. All rights reserved.
+© 2025 Lwena Tech. All rights reserved.
 
 ---
 

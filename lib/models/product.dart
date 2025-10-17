@@ -47,17 +47,29 @@ class Product {
 
   /// Factory constructor for the new inventories table structure
   factory Product.fromInventoryJson(Map<String, dynamic> json) {
+    // Inventories table now stores some fields at top-level for easy querying
     final metadata = json['metadata'] as Map<String, dynamic>? ?? {};
+    final topCategory = (json['category'] as String?) ?? metadata['category'];
+    final topBrand = (json['brand'] as String?) ?? metadata['brand'];
+
+    final selling = (json['selling_price'] as num?)?.toDouble() ??
+        (json['price'] as num?)?.toDouble() ??
+        0.0;
+    final buying =
+        (json['buying_price'] as num?)?.toDouble() ?? (selling * 0.8);
+
     return Product(
       id: json['id'] as String?,
       name: json['name'] as String? ?? 'Unnamed Product',
-      category: metadata['category'] as String? ?? 'Uncategorized',
-      brand: metadata['brand'] as String? ?? 'Unknown Brand',
-      buyingPrice: (json['price'] as num?)?.toDouble() ?? 0.0,
-      sellingPrice: (json['price'] as num?)?.toDouble() ?? 0.0,
+      category: topCategory as String? ?? 'Uncategorized',
+      brand: topBrand as String? ?? 'Unknown Brand',
+      buyingPrice: buying,
+      sellingPrice: selling,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-      description: metadata['description'] as String?,
-      imageUrl: metadata['image_url'] as String?,
+      description: (json['description'] as String?) ??
+          metadata['description'] as String?,
+      imageUrl:
+          (json['image_url'] as String?) ?? (metadata['image_url'] as String?),
       imageUrls: Product._parseImageUrls(metadata),
       dateAdded: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)

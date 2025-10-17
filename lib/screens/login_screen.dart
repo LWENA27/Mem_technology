@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_dashboard.dart';
+import 'super_admin_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,7 +75,13 @@ class _LoginScreenState extends State<LoginScreen> {
           final role = userData['role'];
           debugPrint('User role: $role');
 
-          if (role == 'admin') {
+          if (role == 'super_admin') {
+            debugPrint('Navigating to Super Admin Dashboard');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (context) => const SuperAdminDashboard()),
+            );
+          } else if (role == 'admin') {
             debugPrint('Navigating to Admin Dashboard');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const AdminDashboard()),

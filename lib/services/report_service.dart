@@ -1,7 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
-import '../services/DatabaseService.dart';
+import '../services/database_service.dart';
 
 class ReportService {
   Future<pw.Document> generateSalesReport(

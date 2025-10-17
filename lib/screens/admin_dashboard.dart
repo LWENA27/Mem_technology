@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:lwenatech/services/inventory_service.dart';
-import 'package:lwenatech/models/product.dart';
-import 'package:lwenatech/widgets/add_product_dialog.dart';
-import 'package:lwenatech/screens/inventory_screen.dart';
+import '../services/tenant_manager.dart';
+import '../widgets/add_product_dialog.dart';
+import 'inventory_screen.dart';
 import 'sales_screen.dart';
-import 'reports_screen.dart';
+import 'enhanced_reports_screen.dart';
 import 'admin_account_screen.dart';
+import 'super_admin_dashboard.dart';
 import 'login_screen.dart' as login;
 
 class AdminDashboard extends StatefulWidget {
@@ -17,14 +17,13 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  List<Product> _products = [];
   bool _isLoading = true;
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
     const InventoryScreen(),
     const SalesScreen(),
-    const ReportsScreen(),
+    const EnhancedReportsScreen(),
     const AdminAccountScreen(),
   ];
 
@@ -37,37 +36,53 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   // MEM Technology Color Scheme
   static const Color primaryGreen = Color(0xFF4CAF50);
-  static const Color darkGray = Color(0xFF424242);
   static const Color lightGray = Color(0xFF757575);
   static const Color backgroundColor = Color(0xFFF5F5F5);
 
   @override
   void initState() {
     super.initState();
-    _loadProducts();
+    _initializeTenant();
   }
 
-  _loadProducts() async {
-    setState(() => _isLoading = true);
+  _initializeTenant() async {
     try {
-      final products = await InventoryService.getInventories();
-      setState(() {
-        _products = products;
-        _isLoading = false;
-      });
+      // Ensure tenant is properly initialized for this user
+      await TenantManager().initializeTenant();
+      await TenantManager().ensureTenantConsistency();
     } catch (e) {
+      debugPrint('Error initializing tenant: $e');
+    } finally {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load products: $e'),
-          backgroundColor: primaryGreen,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
     }
+  }
+
+  Future<bool> _checkSuperAdminStatus() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return false;
+
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+      return response['role'] == 'super_admin';
+    } catch (e) {
+      print('Error checking super admin status: $e');
+      return false;
+    }
+  }
+
+  void _navigateToSuperAdmin() async {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const SuperAdminDashboard(),
+      ),
+    );
   }
 
   _logout() async {
@@ -87,15 +102,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _showAddProductDialog() {
     showDialog(
       context: context,
-      builder: (context) => AddProductDialog(
-        onProductAdded: _loadProducts, // Add the required callback
-      ),
+      builder: (context) => const AddProductDialog(),
     );
   }
 
   void _refreshCurrentScreen() {
     if (_currentIndex == 0) {
-      _loadProducts();
+      // Inventory refresh will be handled by the InventoryScreen itself
+      setState(() {}); // Trigger rebuild
     } else if (_currentIndex == 1) {
       // For sales screen, we need to call its refresh method
       // This will be handled by a key to access the sales screen
@@ -117,6 +131,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       );
     }
+
+    // Add super admin button for authorized users
+    actions.add(
+      FutureBuilder<bool>(
+        future: _checkSuperAdminStatus(),
+        builder: (context, snapshot) {
+          if (snapshot.data == true) {
+            return IconButton(
+              icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
+              onPressed: _navigateToSuperAdmin,
+              tooltip: 'Super Admin Dashboard',
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
+    );
 
     // Always add logout button
     actions.add(

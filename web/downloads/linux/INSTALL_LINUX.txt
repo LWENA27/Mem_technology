@@ -1,0 +1,49 @@
+# LwenaTech Linux Installation Guide
+
+## Installation Steps
+
+1. Download: LwenaTech-Linux-v1.0.0.tar.gz
+2. Extract the archive:
+   ```bash
+   tar -xzf LwenaTech-Linux-v1.0.0.tar.gz
+   ```
+3. Navigate to the extracted folder:
+   ```bash
+   cd bundle
+   ```
+4. Run the application:
+   ```bash
+   ./lwenatech
+   ```
+
+## System Requirements
+- Linux x64 (Ubuntu 18.04+ or equivalent)
+- GTK 3.0+
+- Minimum 4GB RAM
+- 500MB free disk space
+
+## Optional: Create Desktop Shortcut
+To add LwenaTech to your applications menu:
+
+1. Create a desktop entry:
+   ```bash
+   cat > ~/.local/share/applications/lwenatech.desktop << EOF
+   [Desktop Entry]
+   Name=LwenaTech
+   Comment=Inventory Management System
+   Exec=/path/to/bundle/lwenatech
+   Icon=/path/to/bundle/data/flutter_assets/assets/app_icon.png
+   Terminal=false
+   Type=Application
+   Categories=Office;
+   EOF
+   ```
+
+2. Replace `/path/to/bundle/` with the actual path where you extracted the app.
+
+## Troubleshooting
+- If you get "permission denied", make the executable runnable: `chmod +x lwenatech`
+- If libraries are missing, install: `sudo apt-get install libgtk-3-0 libblkid1 liblzma5`
+
+## Support
+For technical support, contact: lwena027@gmail.com

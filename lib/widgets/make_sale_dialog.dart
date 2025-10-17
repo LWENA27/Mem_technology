@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
+import '../repositories/sales_repository.dart';
 import '../services/sales_service.dart';
 import '../services/receipt_service.dart';
 
@@ -33,10 +35,10 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
       _selectedProduct = widget.availableProducts[0];
     }
     // Set default business info - in a real app, this would come from user profile/tenant settings
-    _businessNameController.text = 'Your Business Name';
-    _businessAddressController.text = 'Your Business Address';
-    _businessPhoneController.text = '+255 XXX XXX XXX';
-    _businessTINController.text = '123-456-789';
+    _businessNameController.text = '';
+    _businessAddressController.text = '';
+    _businessPhoneController.text = '';
+    _businessTINController.text = '';
   }
 
   _recordSale() async {
@@ -59,26 +61,53 @@ class _MakeSaleDialogState extends State<MakeSaleDialog> {
       // Generate receipt number if needed
       String? receiptNumber;
       if (_generateReceipt) {
-        receiptNumber = SalesService.generateReceiptNumber();
+        if (kIsWeb) {
+          receiptNumber = SalesService.generateReceiptNumber();
+        } else {
+          receiptNumber = SalesRepository.generateReceiptNumber();
+        }
       }
 
-      // Record the sale using SalesService
-      final saleId = await SalesService.recordSale(
-        productId: _selectedProduct!.id,
-        productName: _selectedProduct!.name,
-        quantity: quantity,
-        unitPrice: unitPrice,
-        customerName: _customerNameController.text.trim(),
-        customerPhone: _customerPhoneController.text.trim().isNotEmpty
-            ? _customerPhoneController.text.trim()
-            : null,
-        receiptNumber: receiptNumber,
-      );
+      // Record the sale using platform-appropriate service
+      String saleId;
+      if (kIsWeb) {
+        // Web: Use SalesService (Supabase directly)
+        saleId = await SalesService.recordSale(
+          productId: _selectedProduct!.id,
+          productName: _selectedProduct!.name,
+          quantity: quantity,
+          unitPrice: unitPrice,
+          customerName: _customerNameController.text.trim(),
+          customerPhone: _customerPhoneController.text.trim().isNotEmpty
+              ? _customerPhoneController.text.trim()
+              : null,
+          receiptNumber: receiptNumber,
+        );
+      } else {
+        // Native: Use SalesRepository (offline-first)
+        final salesRepository = SalesRepository();
+        saleId = await salesRepository.recordSale(
+          productId: _selectedProduct!.id,
+          productName: _selectedProduct!.name,
+          quantity: quantity,
+          unitPrice: unitPrice,
+          customerName: _customerNameController.text.trim(),
+          customerPhone: _customerPhoneController.text.trim().isNotEmpty
+              ? _customerPhoneController.text.trim()
+              : null,
+          receiptNumber: receiptNumber,
+        );
+      }
 
       // Get the created sale for receipt generation
       Sale? sale;
       if (_generateReceipt) {
-        sale = await SalesService.getSaleById(saleId);
+        if (kIsWeb) {
+          sale = await SalesService.getSaleById(saleId);
+        } else {
+          final salesRepository = SalesRepository();
+          sale = await salesRepository.getSaleById(saleId);
+        }
       }
 
       // Generate and download receipt if requested

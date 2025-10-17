@@ -58,8 +58,6 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
   // MEM Technology Color Scheme
   static const Color primaryGreen = Color(0xFF4CAF50);
   static const Color darkGray = Color(0xFF424242);
-  static const Color lightGray = Color(0xFF757575);
-  static const Color backgroundColor = Color(0xFFF5F5F5);
 
   @override
   void initState() {
