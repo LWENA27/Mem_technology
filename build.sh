@@ -42,19 +42,14 @@ flutter clean
 echo "📦 Getting Flutter dependencies..."
 flutter pub get
 
-# Check for environment variables
-if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-    echo "⚠️  Warning: SUPABASE_URL or SUPABASE_ANON_KEY not set"
-    echo "🔧 Building with placeholder values..."
-    export SUPABASE_URL="https://your-project.supabase.co"
-    export SUPABASE_ANON_KEY="your-anon-key"
+# Production configuration is already built into the app
+echo "🔧 Using production configuration built into app..."
+echo "� Production Supabase URL: https://kzjgdeqfmxkmpmadtbpb.supabase.co"
 fi
 
 # Build web app
 echo "🏗️  Building web application..."
-flutter build web --release \
-    --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-    --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+flutter build web --release
 
 echo "✅ Build completed successfully!"
 echo "📁 Output directory: build/web"
