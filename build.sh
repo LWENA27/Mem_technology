@@ -44,8 +44,7 @@ flutter pub get
 
 # Production configuration is already built into the app
 echo "🔧 Using production configuration built into app..."
-echo "� Production Supabase URL: https://kzjgdeqfmxkmpmadtbpb.supabase.co"
-fi
+echo "📡 Production Supabase URL: https://kzjgdeqfmxkmpmadtbpb.supabase.co"
 
 # Build web app
 echo "🏗️  Building web application..."
